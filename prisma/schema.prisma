@@ -1,0 +1,75 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id                String         @id @default(auto()) @map("_id") @db.ObjectId
+  email             String         @unique
+  phoneNumber       String
+  password          String
+  fcmToken          String?
+  role              UserRole       @default(TRAVELER)
+  isPayment         Boolean        @default(false)
+  customerId        String?
+  priceId           String?
+  planName          String?
+  subscriptionId    String?
+  otp               Int?
+  name              String?
+  ethnicity         String?
+  lat               String?
+  long              String?
+  gender            String?
+  facebook          String @default("")
+  twitter           String @default("")
+  instagram         String @default("")
+  linkedin          String @default("")
+  tiktok            String @default("")
+  dob               DateTime?
+  hight             String?
+  weight            String?
+  sexOrientation    String?
+  education         String?
+  distance          String?
+  interest          String[]
+  favoritesFood     String[]
+  photos            Json?
+  about             String?
+  // status            UserStatus     @default(INACTIVE)
+  // expirationOtp     DateTime?
+  // isCompleteProfile Boolean        @default(false)
+  // createdAt         DateTime       @default(now())
+  // updatedAt         DateTime       @updatedAt
+  // receiver          Notification[] @relation("Receiver")
+  // sender            Notification[] @relation("Sender")
+  // likesSent         Like[]         @relation("sender")
+  // likesReceived     Like[]         @relation("receiver")
+  // disLikeSend       DisLike[]      @relation("sender")
+  // disLikeReceived   DisLike[]      @relation("receiver")
+  // SuperLikeSend     SuperLike[]    @relation("sender")
+  // SuperLikeReceived SuperLike[]    @relation("receiver")
+  // roomsSent     Room[]         @relation("SenderRelation")
+  // roomsReceived Room[]         @relation("ReceiverRelation")
+  // chatsSent     Chat[]         @relation("SenderRelation")
+  // chatsReceived Chat[]         @relation("ReceiverRelation")
+
+  @@map("users")
+}
+
+enum UserRole{
+  TRAVELER
+  ADMIN
+}
