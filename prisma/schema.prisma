@@ -1,12 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -14,14 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model User {
   id                String         @id @default(auto()) @map("_id") @db.ObjectId
   email             String         @unique
-  phoneNumber       String
+  phone             String         @unique
+  username          String         @unique
   password          String
   fcmToken          String?
-  role              UserRole       @default(TRAVELER)
+  role              UserRole       @default(USER)
   isPayment         Boolean        @default(false)
   customerId        String?
   priceId           String?
@@ -29,18 +22,10 @@ model User {
   subscriptionId    String?
   otp               Int?
   name              String?
-  ethnicity         String?
   lat               String?
   long              String?
   gender            String?
-  facebook          String @default("")
-  twitter           String @default("")
-  instagram         String @default("")
-  linkedin          String @default("")
-  tiktok            String @default("")
   dob               DateTime?
-  hight             String?
-  weight            String?
   sexOrientation    String?
   education         String?
   distance          String?
@@ -48,28 +33,210 @@ model User {
   favoritesFood     String[]
   photos            Json?
   about             String?
-  // status            UserStatus     @default(INACTIVE)
-  // expirationOtp     DateTime?
-  // isCompleteProfile Boolean        @default(false)
-  // createdAt         DateTime       @default(now())
-  // updatedAt         DateTime       @updatedAt
-  // receiver          Notification[] @relation("Receiver")
-  // sender            Notification[] @relation("Sender")
-  // likesSent         Like[]         @relation("sender")
-  // likesReceived     Like[]         @relation("receiver")
-  // disLikeSend       DisLike[]      @relation("sender")
-  // disLikeReceived   DisLike[]      @relation("receiver")
-  // SuperLikeSend     SuperLike[]    @relation("sender")
-  // SuperLikeReceived SuperLike[]    @relation("receiver")
-  // roomsSent     Room[]         @relation("SenderRelation")
-  // roomsReceived Room[]         @relation("ReceiverRelation")
-  // chatsSent     Chat[]         @relation("SenderRelation")
-  // chatsReceived Chat[]         @relation("ReceiverRelation")
+  status            UserStatus     @default(INACTIVE)
+  expirationOtp     DateTime?
+  isCompleteProfile Boolean        @default(false)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  receiver          Notification[] @relation("Receiver")
+  sender            Notification[] @relation("Sender")
+  likesSent         Like[]         @relation("sender")
+  likesReceived     Like[]         @relation("receiver")
+  disLikeSend       DisLike[]      @relation("sender")
+  disLikeReceived   DisLike[]      @relation("receiver")
+  SuperLikeSend     SuperLike[]    @relation("sender")
+  SuperLikeReceived SuperLike[]    @relation("receiver")
+  roomsSent     Room[]         @relation("SenderRelation")
+  roomsReceived Room[]         @relation("ReceiverRelation")
+  chatsSent     Chat[]         @relation("SenderRelation")
+  chatsReceived Chat[]         @relation("ReceiverRelation")
 
   @@map("users")
 }
 
-enum UserRole{
-  TRAVELER
+model verifyPhoneOtp {
+  id          String            @id @default(auto()) @map("_id")  @db.ObjectId
+  phone       String            @unique
+  otp         String
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model loginOtp {
+  id        String          @id @default(auto()) @map("_id")  @db.ObjectId
+  phone     String          @unique
+  otp       String
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+model Price {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  amount        Float
+  name          String
+  priceId       String
+  productId     String
+  features      Json
+  description   String?
+  currency      String
+  interval      String
+  active        Boolean
+  intervalCount Int
+  freeTrailDays Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("prices")
+}
+
+model PaymentInfo {
+  id                 String    @id @default(auto()) @map("_id") @db.ObjectId
+  userEmail          String?
+  subscriptionPlane  String?
+  subscriptionId     String?
+  date               DateTime?
+  amount             Float?
+  tranId             String?
+  status             String?
+  hosted_invoice_url String?
+  invoice_pdf        String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@map("paymentInfos")
+}
+
+model Notification {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  receiverId String   @db.ObjectId
+  senderId   String   @db.ObjectId
+  receiver   User     @relation("Receiver", fields: [receiverId], references: [id])
+  sender     User     @relation("Sender", fields: [senderId], references: [id])
+  title      String
+  body       String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("notifications")
+}
+
+model Like {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  senderId   String   @db.ObjectId
+  receiverId String   @db.ObjectId
+  sender     User     @relation("sender", fields: [senderId], references: [id])
+  receiver   User     @relation("receiver", fields: [receiverId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("likes")
+}
+
+model DisLike {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  senderId   String   @db.ObjectId
+  receiverId String   @db.ObjectId
+  sender     User     @relation("sender", fields: [senderId], references: [id])
+  receiver   User     @relation("receiver", fields: [receiverId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("disLikes")
+}
+
+model SuperLike {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  senderId   String   @db.ObjectId
+  receiverId String   @db.ObjectId
+  sender     User     @relation("sender", fields: [senderId], references: [id])
+  receiver   User     @relation("receiver", fields: [receiverId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("superLikes")
+}
+
+model Chat {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  senderId   String   @db.ObjectId
+  receiverId String   @db.ObjectId
+  message    String
+  roomId     String   @db.ObjectId
+  images     String[]
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  sender     User     @relation("SenderRelation", fields: [senderId], references: [id])
+  receiver   User     @relation("ReceiverRelation", fields: [receiverId], references: [id])
+  room       Room     @relation(fields: [roomId], references: [id])
+
+  @@map("chats")
+}
+
+model Room {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  senderId   String   @db.ObjectId
+  receiverId String   @db.ObjectId
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  sender     User     @relation("SenderRelation", fields: [senderId], references: [id])
+  receiver   User     @relation("ReceiverRelation", fields: [receiverId], references: [id])
+  chat       Chat[]
+
+  @@map("rooms")
+}
+
+model phoneChangeRequest {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String            @db.ObjectId
+
+}
+
+enum UserRole {
   ADMIN
+  ARTIST
+  FAN
+  SUPER_ADMIN
+  USER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+enum TripType {
+  BACKPACK
+  SPORTING
+  CHILL
+  LUXE
+  BUSINESS
+}
+enum TripDuration {
+  FEWDAYS
+  ONE_TO_THREE_WEEKS
+  ONE_TO_THREE_MONTHS
+  SIX_MONTHS_OR_MORE
+
+}
+
+enum AgeGroup {
+  EIGHTEEN_TO_TWENTYFIVE
+  TWENTYFIVE_TO_THIRTYFIVE
+  THIRTYFIVE_TO_FOURTYFIVE
+  FOURTYFIVE_TO_SIXTY
+  SIXY_TO_MORE
+
+}
+
+enum InterestType {
+  FOOD
+  SPORT
+  READING
+  SEWING
+  RIDING
+  CINEMA
+  PAINTING
 }

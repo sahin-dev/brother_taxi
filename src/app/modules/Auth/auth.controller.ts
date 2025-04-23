@@ -1,0 +1,142 @@
+import { Request, Response } from "express";
+import catchAsync from "../../../shared/catchAsync"
+import { AuthServices } from "./auth.service";
+import ApiResponse from "../../../shared/ApiResponse";
+import httpStatus from "http-status";
+import { string } from "zod";
+
+
+const initiateLogin = catchAsync(async (req:Request, res:Response))=>{
+    const result = await 
+}
+
+const loginUser = catchAsync(async (req: Request, res: Response) => {
+
+  const result = await AuthServices.loginUser(req.body);
+  res.cookie("token", result.token, { httpOnly: true });
+  ApiResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "User logged in successfully",
+    data: result,
+  });
+});
+
+
+// const logoutUser = catchAsync(async (req: Request, res: Response) => {
+//   // Clear the token cookie
+//   res.clearCookie("token", {
+//     httpOnly: true,
+//     secure: process.env.NODE_ENV === "production",
+//     sameSite: "lax",
+//   });
+
+//   ApiResponse(res, {
+//     statusCode: httpStatus.OK,
+//     success: true,
+//     message: "User Successfully logged out",
+//     data: null,
+//   });
+// });
+
+// // get user profile
+// const getMyProfile = catchAsync(async (req: Request, res: Response) => {
+//   const userToken = req.headers.authorization;
+
+//   const result = await AuthServices.getMyProfile(userToken as string);
+//   ApiResponse(res, {
+//     success: true,
+//     statusCode: 201,
+//     message: "User profile retrieved successfully",
+//     data: result,
+//   });
+// });
+
+// // change password
+// const changePassword = catchAsync(async (req: Request, res: Response) => {
+//   const userToken = req.headers.authorization;
+//   const { oldPassword, newPassword } = req.body;
+
+//   const result = await AuthServices.changePassword(
+//     userToken as string,
+//     newPassword,
+//     oldPassword
+//   );
+//   ApiResponse(res, {
+//     success: true,
+//     statusCode: 201,
+//     message: "Password changed successfully",
+//     data: result,
+//   });
+// });
+
+
+// // forgot password
+// const forgotPassword = catchAsync(async (req: Request, res: Response) => {
+
+//   const result= await AuthServices.forgotPassword(req.body);
+
+//   ApiResponse(res, {
+//       statusCode: httpStatus.OK,
+//       success: true,
+//       message: "Check your email!",
+//       data: result
+//   })
+// });
+// const resendOtp = catchAsync(async (req: Request, res: Response) => {
+
+//   const result= await AuthServices.resendOtp(req.body.email);
+
+//   ApiResponse(res, {
+//       statusCode: httpStatus.OK,
+//       success: true,
+//       message: "Check your email!",
+//       data: result
+//   })
+// });
+// const verifyForgotPasswordOtp = catchAsync(async (req: Request, res: Response) => {
+
+//   const result= await AuthServices.verifyForgotPasswordOtp(req.body);
+
+//   ApiResponse(res, {
+//       statusCode: httpStatus.OK,
+//       success: true,
+//       message: "Check your email!",
+//       data: result
+//   })
+// });
+
+// const resetPassword = catchAsync(async (req: Request, res: Response) => {
+
+
+
+//   await AuthServices.resetPassword( req.body);
+
+//   ApiResponse(res, {
+//       statusCode: httpStatus.OK,
+//       success: true,
+//       message: "Password Reset!",
+//       data: null
+//   })
+// });
+
+
+// const changePhone = catchAsync(async (req:Request, rex:Response)=>{
+
+// })
+
+// const verifyPhoneNumber = catchAsync(async (req:Request, res:Response)=>{
+//     await 
+// })
+
+export const AuthController = {
+  loginUser,
+//   logoutUser,
+//   getMyProfile,
+//   changePassword,
+//   forgotPassword,
+//   resetPassword,
+//   resendOtp,
+//   verifyForgotPasswordOtp,
+//   changePhone
+};
