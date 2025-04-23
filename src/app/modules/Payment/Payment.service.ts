@@ -12,7 +12,7 @@ import { IUser } from '../User/user.interface';
 
 
 // const stripe = require('stripe')(
-//   'sk_test_51QA6IkFGNtvHx4UtPq0S9a91GR9VUfXVIEptfIdma8LX8ITVSKu5ehK3MclRD9qDN5lYgJZCXp8RRWkKKWKEcP98004GHpKW2R',
+//   ,
 // );
 
 export interface IBuySubscription {
