@@ -4,11 +4,14 @@ import { AuthController } from "./auth.controller";
 // import { UserValidation } from "../User/user.validation";
 import auth from "../../middlewares/auth.middleware";
 // import {UserRole} from '@prisma/client'
-import { UserLoginValidationSchema, changePasswordValidationSchema, changePhoneNumberSchema } from "./auth.validation";
+import { UserLoginValidationSchema, changePasswordValidationSchema, changePhoneNumberSchema, loginAttemptSchema } from "./auth.validation";
 
 
 const router = express.Router();
 
+
+//login-attempt
+router.post('/login-attempt', validateRequest(loginAttemptSchema) ,AuthController.initiateLogin)
 // user login route
 router.post(
   "/login",
@@ -21,11 +24,11 @@ router.post(
 // // user logout route
 // router.post("/logout", AuthController.logoutUser);
 
-// router.get(
-//   "/get-me",
-//   auth(UserRole.ADMIN, UserRole.USER),
-//   AuthController.getMyProfile
-// );
+router.get(
+  "/get-me",
+  auth(),
+  AuthController.getMyProfile
+);
 
 // router.put(
 //   "/change-password",

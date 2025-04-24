@@ -6,9 +6,15 @@ import httpStatus from "http-status";
 import { string } from "zod";
 
 
-const initiateLogin = catchAsync(async (req:Request, res:Response))=>{
-    const result = await 
-}
+const initiateLogin = catchAsync(async (req:Request, res:Response)=>{
+  const result = await AuthServices.initiateLogin(req.body)
+  ApiResponse(res,{
+    statusCode:httpStatus.OK,
+    success:true,
+    message:"Login request initiated",
+    data:result
+  })
+})
 
 const loginUser = catchAsync(async (req: Request, res: Response) => {
 
@@ -40,17 +46,17 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
 // });
 
 // // get user profile
-// const getMyProfile = catchAsync(async (req: Request, res: Response) => {
-//   const userToken = req.headers.authorization;
+const getMyProfile = catchAsync(async (req: Request, res: Response) => {
+  const userToken = req.headers.authorization;
 
-//   const result = await AuthServices.getMyProfile(userToken as string);
-//   ApiResponse(res, {
-//     success: true,
-//     statusCode: 201,
-//     message: "User profile retrieved successfully",
-//     data: result,
-//   });
-// });
+  const result = await AuthServices.getMyProfile(userToken as string);
+  ApiResponse(res, {
+    success: true,
+    statusCode: 201,
+    message: "User profile retrieved successfully",
+    data: result,
+  });
+});
 
 // // change password
 // const changePassword = catchAsync(async (req: Request, res: Response) => {
@@ -132,11 +138,12 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
 export const AuthController = {
   loginUser,
 //   logoutUser,
-//   getMyProfile,
+  getMyProfile,
 //   changePassword,
 //   forgotPassword,
 //   resetPassword,
 //   resendOtp,
 //   verifyForgotPasswordOtp,
 //   changePhone
+    initiateLogin
 };

@@ -6,14 +6,14 @@ import { JwtPayload } from 'jsonwebtoken';
 
 import Stripe from 'stripe';
 import prisma from '../../../shared/prisma';
-import ApiError from '../../../errors/ApiErrors';
+import ApiError from '../../../errors/ApiError';
 import { IUser } from '../User/user.interface';
 
 
 
-// const stripe = require('stripe')(
-//   ,
-// );
+const stripe = require('stripe')(
+  
+);
 
 export interface IBuySubscription {
   email: string;

@@ -3,6 +3,7 @@ import z from 'zod'
 
 export const UserLoginValidationSchema = z.object({
     phone: z.string().nonempty("Name is required"),
+    otp: z.number({required_error:"Otp is required"}).positive({message:"Otp must be a positive number"})
  
   });
   
@@ -16,4 +17,9 @@ export const changePasswordValidationSchema = z.object({
 
   export const changePhoneNumberSchema = z.object({
     newPhone: z.string({required_error:"New phone  number is required."})
+  })
+
+  export const loginAttemptSchema = z.object({
+    phone: z.string().nonempty("Name is required"),
+ 
   })

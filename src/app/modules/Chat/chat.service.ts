@@ -1,6 +1,6 @@
 
-import ApiError from '../../../errors/ApiErrors';
-import { fileUploader } from '../../../helpars/fileUploader';
+import ApiError from '../../../errors/ApiError';
+import { fileUploader } from '../../../helpers/fileUploader';
 import prisma from '../../../shared/prisma';
 
 const saveChatIntoDb = async (user: any, payload: any) => {

@@ -3,10 +3,8 @@ import express, { Application, NextFunction, Request, Response } from "express";
 import httpStatus from "http-status";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-// import GlobalErrorHandler from "./app/middlewares/globalErrorHandler";
 import router from "./app/routes";
-
-
+import ErrorHandler from "./app/middlewares/error.middleware";
 
 const app: Application = express();
 export const corsOptions = {
@@ -36,7 +34,7 @@ app.get("/", (req: Request, res: Response) => {
 app.use("/api/v1", router);
 
 // Error handling middleware
-// app.use(GlobalErrorHandler);
+app.use(ErrorHandler);
 
 // Not found handler
 app.use((req: Request, res: Response, next: NextFunction) => {

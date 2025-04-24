@@ -9,32 +9,52 @@ datasource db {
 
 model User {
   id                String         @id @default(auto()) @map("_id") @db.ObjectId
-  email             String         @unique
+  email             String?         @unique
   phone             String         @unique
-  username          String         @unique
-  password          String
-  fcmToken          String?
-  role              UserRole       @default(USER)
-  isPayment         Boolean        @default(false)
-  customerId        String?
-  priceId           String?
-  planName          String?
-  subscriptionId    String?
-  otp               Int?
-  name              String?
-  lat               String?
-  long              String?
-  gender            String?
+  username          String?         @unique
   dob               DateTime?
-  sexOrientation    String?
-  education         String?
-  distance          String?
-  interest          String[]
-  favoritesFood     String[]
-  photos            Json?
+  residence_country String?
+  firstName         String?
+  lastName          String?
   about             String?
-  status            UserStatus     @default(INACTIVE)
-  expirationOtp     DateTime?
+  interests         InterestType[]
+  budgetMin         Int?
+  budgetMax         Int?
+  travelPartner     TravelPartner?
+  deleted           Boolean?
+  genderId          String         @db.ObjectId
+  gender            GenderCategory @relation(fields: [genderId], references: [id])
+  genderVisibility  Boolean        @default(false)
+  tripType          TripType?
+  tripDuration      TripDuration?
+  trip_continent  String?
+  trip_country String?
+  interestAgeGroup  AgeGroup?
+  otp            Int?
+  otpExpiresIn   DateTime?
+  status            UserStatus?     @default(INACTIVE)
+
+
+  password       String?
+  fcmToken       String?
+  role           UserRole @default(USER)
+  isPayment      Boolean  @default(false)
+  customerId     String?
+  priceId        String?
+  planName       String?
+  subscriptionId String?
+  name           String?
+  lat            String?
+  long           String?
+  sexOrientation String?
+  education      String?
+  distance       String?
+
+  favoritesFood String[]
+  photos        Json?
+
+
+  // expirationOtp     DateTime?
   isCompleteProfile Boolean        @default(false)
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
@@ -46,29 +66,34 @@ model User {
   disLikeReceived   DisLike[]      @relation("receiver")
   SuperLikeSend     SuperLike[]    @relation("sender")
   SuperLikeReceived SuperLike[]    @relation("receiver")
-  roomsSent     Room[]         @relation("SenderRelation")
-  roomsReceived Room[]         @relation("ReceiverRelation")
-  chatsSent     Chat[]         @relation("SenderRelation")
-  chatsReceived Chat[]         @relation("ReceiverRelation")
+  roomsSent         Room[]         @relation("SenderRelation")
+  roomsReceived     Room[]         @relation("ReceiverRelation")
+  chatsSent         Chat[]         @relation("SenderRelation")
+  chatsReceived     Chat[]         @relation("ReceiverRelation")
 
   @@map("users")
 }
 
-model verifyPhoneOtp {
-  id          String            @id @default(auto()) @map("_id")  @db.ObjectId
-  phone       String            @unique
-  otp         String
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-}
+// model verifyPhoneOtp {
+//   id          String            @id @default(auto()) @map("_id")  @db.ObjectId
+//   phone       String            @unique
+//   otp         String
+//   createdAt    DateTime       @default(now())
+//   updatedAt    DateTime       @updatedAt
+// }
 
-model loginOtp {
-  id        String          @id @default(auto()) @map("_id")  @db.ObjectId
-  phone     String          @unique
-  otp       String
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
-}
+// model Otp {
+//   id        String   @id @default(auto()) @map("_id") @db.ObjectId
+//   userId    String  @db.ObjectId
+//   phone     String
+//   otp       String
+//   expiresIn String  @default("5m")
+//   otpType   OtpType
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+
+//   @@map("otps")
+// }
 
 model Price {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -187,10 +212,16 @@ model Room {
   @@map("rooms")
 }
 
-model phoneChangeRequest {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId      String            @db.ObjectId
 
+
+model GenderCategory {
+  id          String              @id @default(auto()) @map("_id") @db.ObjectId
+  label       String
+  categoruies GenderSubCategory[]
+  createdAt   DateTime
+  updatedAt   DateTime            @updatedAt
+
+  User User[]
 }
 
 enum UserRole {
@@ -214,12 +245,12 @@ enum TripType {
   LUXE
   BUSINESS
 }
+
 enum TripDuration {
   FEWDAYS
   ONE_TO_THREE_WEEKS
   ONE_TO_THREE_MONTHS
   SIX_MONTHS_OR_MORE
-
 }
 
 enum AgeGroup {
@@ -228,7 +259,6 @@ enum AgeGroup {
   THIRTYFIVE_TO_FOURTYFIVE
   FOURTYFIVE_TO_SIXTY
   SIXY_TO_MORE
-
 }
 
 enum InterestType {
@@ -239,4 +269,25 @@ enum InterestType {
   RIDING
   CINEMA
   PAINTING
+}
+
+// enum OtpType {
+//   LOGIN
+//   SIGNUP
+//   NUMBER_CHANGE
+// }
+
+enum TravelPartner {
+  MENS
+  WOMENS
+  NON_BINARIES
+  EVERYONE
+}
+
+enum GenderSubCategory {
+  INTERSEX
+  TRANSEXUAL
+  CIS
+  MAN_NON_BINARY
+  TRANSMASCULIN
 }

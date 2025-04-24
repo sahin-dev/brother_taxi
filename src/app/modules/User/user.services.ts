@@ -141,6 +141,16 @@ const getUsersFromDb = async (
   };
 };
 
+
+const getUserProfile = async (userId:string)=>{
+  const user = await prisma.user.findUnique({where:{id:userId}})
+
+  if (!user){
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found")
+  }
+  return user
+}
+
 // update profile by user won profile uisng token or email and id
 const updateProfile = async (req: Request) => {
  try {

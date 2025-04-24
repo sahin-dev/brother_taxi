@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import catchAsync from '../../../shared/catchAsync';
-import sendResponse from '../../../shared/sendResponse';
+import sendResponse from '../../../shared/ApiResponse';
 import httpStatus from 'http-status';
-import ApiError from '../../../errors/ApiErrors';
+import ApiError from '../../../errors/ApiError';
 import { chatServices } from './chat.service';
 
 const saveChat = catchAsync(async (req: Request, res: Response) => {

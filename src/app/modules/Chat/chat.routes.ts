@@ -1,9 +1,9 @@
 import express from 'express';
 import { validate } from 'node-cron';
-import validateRequest from '../../middlewares/validateRequest';
+import validateRequest from '../../middlewares/validation.middleware';
 import { chatValidation } from './chat.validation';
 import { UserRole } from '@prisma/client';
-import auth from '../../middlewares/auth';
+import auth from '../../middlewares/auth.middleware';
 import { chatController } from './chat.controller';
 import { fileUploader } from '../../../helpars/fileUploader';
 
