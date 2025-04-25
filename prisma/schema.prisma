@@ -22,13 +22,13 @@ model User {
   budgetMax         Int?
   travelPartner     TravelPartner?
   deleted           Boolean?
-  genderId          String         @db.ObjectId
-  gender            GenderCategory @relation(fields: [genderId], references: [id])
-  genderVisibility  Boolean        @default(false)
+
+  gender            GenderDescription
+  genderVisibility  Boolean?        @default(false)
   tripType          TripType?
   tripDuration      TripDuration?
-  trip_continent  String?
-  trip_country String?
+  tripContinent  String?
+  tripCountry String?
   interestAgeGroup  AgeGroup?
   otp            Int?
   otpExpiresIn   DateTime?
@@ -74,6 +74,11 @@ model User {
   @@map("users")
 }
 
+type GenderDescription {
+  label   String
+  sub_categories    GenderSubCategory[]
+
+}
 // model verifyPhoneOtp {
 //   id          String            @id @default(auto()) @map("_id")  @db.ObjectId
 //   phone       String            @unique
@@ -82,18 +87,16 @@ model User {
 //   updatedAt    DateTime       @updatedAt
 // }
 
-// model Otp {
-//   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-//   userId    String  @db.ObjectId
-//   phone     String
-//   otp       String
-//   expiresIn String  @default("5m")
-//   otpType   OtpType
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
+model Otp {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  phone     String  @unique
+  otp       String
+  expiresIn DateTime  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-//   @@map("otps")
-// }
+  @@map("otps")
+}
 
 model Price {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
@@ -217,11 +220,10 @@ model Room {
 model GenderCategory {
   id          String              @id @default(auto()) @map("_id") @db.ObjectId
   label       String
-  categoruies GenderSubCategory[]
+  categories GenderSubCategory[]
   createdAt   DateTime
   updatedAt   DateTime            @updatedAt
 
-  User User[]
 }
 
 enum UserRole {
@@ -290,4 +292,10 @@ enum GenderSubCategory {
   CIS
   MAN_NON_BINARY
   TRANSMASCULIN
+}
+
+enum RequestType {
+  LOGIN
+  SIGNUP
+  CHANGE_PHONE
 }

@@ -1,10 +1,31 @@
 import { Request, Response } from "express";
-import catchAsync from "../../../shared/catchAsync"
+import catchAsync from "../../../shared/catchAsync";
 import { AuthServices } from "./auth.service";
 import ApiResponse from "../../../shared/ApiResponse";
 import httpStatus from "http-status";
-import { string } from "zod";
 
+
+
+
+const verifyPhone = catchAsync(async (req:Request, res:Response)=>{
+  const result = await AuthServices.verifyPhoneNumber(req.body)
+  ApiResponse(res,{
+    statusCode:httpStatus.OK,
+    success:true,
+    message:"Otp sent successfully",
+    data:result
+  })
+})
+
+const verifyOtp = catchAsync(async (req:Request, res: Response)=>{
+  const result = await AuthServices.verifyOtp(req.body)
+  ApiResponse(res, {
+    statusCode:httpStatus.OK,
+    success:true,
+    message:"Otp verified successfully",
+    data:result
+  })
+})
 
 const initiateLogin = catchAsync(async (req:Request, res:Response)=>{
   const result = await AuthServices.initiateLogin(req.body)
@@ -139,6 +160,8 @@ export const AuthController = {
   loginUser,
 //   logoutUser,
   getMyProfile,
+  verifyPhone, 
+  verifyOtp,
 //   changePassword,
 //   forgotPassword,
 //   resetPassword,

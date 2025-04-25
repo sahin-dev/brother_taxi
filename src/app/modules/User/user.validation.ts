@@ -1,21 +1,21 @@
-import { InterestType } from "@prisma/client";
+import { GenderSubCategory, InterestType, TripDuration, TripType } from "@prisma/client";
 import { z } from "zod";
 
 const CreateUserValidationSchema = z.object({
-  phone:z.string(),
+  phone:z.string().nonempty("Phone is required"),
   email:z.string().email().nonempty("Email is required"),
   username: z.string().nonempty("Username is required"),
-  dob:z.date({required_error:"Date of birth is required"}),
-  birth_country:z.string().nonempty("country is required"),
-  gender: z.string().nonempty("Gender is required"),
-  interest:z.string().nonempty("Interest is required"),
-  trip_type:z.string().nonempty("Trip type is required"),
-  trip_duration:z.string(),
-  continent:z.string().nonempty("Continent is required"),
-  trip_country:z.string().nonempty("Trip country is requred"),
-  age_range:z.string().nonempty("Age range is required"),
-  interests:z.nativeEnum(InterestType),
-  budget:z.object({max:z.number({required_error:"Max must be provided"}), min:z.number({required_error:"Min must be provided"})}),
+  dob:z.string({required_error:"Date of birth is required"}),
+  residence_country:z.string().nonempty("country is required"),
+  gender: z.object({label:z.string().nonempty("Label is required"), sub_categories:z.nativeEnum(GenderSubCategory).optional()}),
+  tripType:z.nativeEnum(TripType),
+  tripDuration:z.nativeEnum(TripDuration),
+  tripContinent:z.string().nonempty("Continent is required"),
+  tripCountry:z.string().nonempty("Trip country is requred"),
+  interestAgeGroup:z.string().nonempty("Age range is required"),
+  interests:z.array(z.nativeEnum(InterestType)),
+  budgetMax:z.number({required_error:"budget max is required"}),
+  budgetMin:z.number({required_error:"Budget min is required"}),
   about:z.string().nonempty("About must be provided")
 
 });
@@ -32,11 +32,17 @@ const UserLoginValidationSchema = z.object({
 const userUpdateSchema = z.object({
   firstName: z.string().optional(),
   lastName: z.string().optional(),
-  promoCode: z.string().optional(),
-  profession: z.string().optional(),
+  dob: z.string().optional(),
+  interests: z.array(z.nativeEnum(InterestType)).optional(),
+  username:z.string().optional()
 });
 
+const checkEmailSchema = z.object({
+  email:z.string().email("Email invalid").nonempty("email is required")
+})
+
 export const UserValidation = {
+  checkEmailSchema,
   CreateUserValidationSchema,
   UserLoginValidationSchema,
   userUpdateSchema,

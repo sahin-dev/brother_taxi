@@ -1,4 +1,4 @@
-import { User } from "@prisma/client";
+import { RequestType, User } from "@prisma/client";
 
 import * as bcrypt from "bcrypt";
 import crypto from "crypto";
@@ -21,11 +21,15 @@ const initiateLogin = async (payload: {phone:string})=>{
     if(!user){
       throw new ApiError(httpStatus.NOT_FOUND, "User not found!")
     }
-    const otp =  Math.floor(100000 + Math.random() * 900000)
+    const otp =  Math.floor(100000 + Math.random() * 900000).toString()
     const expirationDate = new Date(Date.now() + 5 *60*1000)
-    await prisma.user.update({where:{phone:payload.phone}, data:{otp,otpExpiresIn:expirationDate.toISOString()}})
+    const existingOtp = await prisma.otp.findUnique({where:{phone:payload.phone}})
+    if(existingOtp){
+      await prisma.otp.update({where:{id:existingOtp.id},data:{otp,expiresIn:expirationDate}})
+    }
+    await prisma.otp.create({data:{otp,expiresIn:expirationDate,phone:payload.phone}})
     // await redis.setex(payload.phone,300,otp)
-    return {message:  "Otp send successfully"}
+    return {message:  "Otp generated successfully"}
 
   // const loginOtp = await prisma.loginOtp.findUnique({where:{phone:payload.phone}})
   // if (! loginOtp){
@@ -129,6 +133,101 @@ const getMyProfile = async (userToken: string) => {
   return userProfile;
 };
 
+
+
+const generateOtp = ()=>{
+  const otp =  Math.floor(100000 + Math.random() * 900000)
+  return otp.toString()
+}
+
+const verifyPhoneNumber = async ({phone,requestType}:{phone:string, requestType:string})=>{
+  if (requestType === RequestType.LOGIN){
+    const user = await prisma.user.findUnique({where:{phone}})
+    if (!user){
+      throw new ApiError(httpStatus.NOT_FOUND, "User not found!")
+    }
+    const otp = generateOtp()
+    const otpExpiary = new Date(Date.now() + 5 * 60 * 1000)
+    const ExistingOtp = await prisma.otp.findUnique({where:{phone}})
+    if (!ExistingOtp){
+      await prisma.otp.create({data:{otp,expiresIn:otpExpiary,phone}})
+    }else{
+      await prisma.otp.update({where:{id:ExistingOtp.id},data:{otp,expiresIn:otpExpiary,phone}})
+    }
+    return {message:"Otp send successfully"}
+
+  }else if (requestType === RequestType.CHANGE_PHONE){
+    const user = await prisma.user.findUnique({where:{phone}})
+    if (!user){
+      throw new ApiError(httpStatus.NOT_FOUND, "User not found")
+    }
+
+    const otp = generateOtp()
+    const otpExpiary = new Date(Date.now() + 5 * 60 * 1000)
+    const ExistingOtp = await prisma.otp.findUnique({where:{phone}})
+
+    if (!ExistingOtp){
+
+      await prisma.otp.create({data:{otp,expiresIn:otpExpiary,phone}})
+      
+    }else{
+
+      await prisma.otp.update({where:{id:ExistingOtp.id},data:{otp,expiresIn:otpExpiary,phone}})
+
+    }
+
+    return {message:"Otp send successfully"}
+
+  }else if (requestType === RequestType.SIGNUP){
+
+    const userPresent = await checkUserExistence(phone)
+
+    if (userPresent){
+
+      throw new ApiError(httpStatus.BAD_REQUEST, `User with this phone ${phone} already exist.`)
+    }
+
+    const otp = generateOtp()
+    const otpExpiary = new Date(Date.now() + 15 * 60 * 1000)
+
+    
+    const ExistingOtp = await prisma.otp.findUnique({where:{phone}})
+
+    if (!ExistingOtp){
+
+      await prisma.otp.create({data:{otp,expiresIn:otpExpiary,phone}})
+      
+    }else{
+
+      await prisma.otp.update({where:{id:ExistingOtp.id},data:{otp,expiresIn:otpExpiary,phone}})
+
+    }
+
+    return {message:"Otp send successfully"}
+  }
+}
+
+const verifyOtp  = async ({phone,otp}:{phone:string, otp:string})=>{
+  const existingOtp = await prisma.otp.findUnique({where:{phone}})
+  if (!existingOtp){
+    throw new ApiError(httpStatus.NOT_FOUND, "Otp not found")
+  }
+  if (existingOtp.otp !== otp || !existingOtp.expiresIn || existingOtp.expiresIn < new Date()){
+    throw new ApiError (httpStatus.BAD_REQUEST, "Otp is invalid")
+  }
+  
+  return {message:"Otp verified successfully."}
+}
+
+const checkUserExistence = async (phone:string)=>{
+  const user = await prisma.user.findUnique({where:{phone}})
+  if (user){
+    return true
+  }
+  return false
+}
+
+
 // // change password
 
 const changePhoneNumber = async (token:string,newPhone:string, oldPhone:string)=>{
@@ -164,6 +263,12 @@ const verifyChangePhoneNumberOtp = async (token:string, otp:number, newPhone:str
   return {message:"Phone number changed successfully"}
 }
 
+// const checkPhoneNumber = async (phone:string)=>{
+//   const user = await prisma.user.findUnique({where:{phone}})
+//   if(user){
+
+//   }
+// }
 // const changePassword = async (
 //   userToken: string,
 //   newPassword: string,
@@ -426,6 +531,8 @@ export const AuthServices = {
   initiateLogin,
   loginUser,
   getMyProfile,
+  verifyPhoneNumber,
+  verifyOtp
 //   changePassword,
 //   forgotPassword,
 //   resetPassword,

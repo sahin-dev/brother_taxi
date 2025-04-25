@@ -1,9 +1,10 @@
 
+import { RequestType } from '@prisma/client';
 import z from 'zod'
 
 export const UserLoginValidationSchema = z.object({
     phone: z.string().nonempty("Name is required"),
-    otp: z.number({required_error:"Otp is required"}).positive({message:"Otp must be a positive number"})
+    otp: z.string({required_error:"Otp is required"})
  
   });
   
@@ -13,7 +14,7 @@ export const changePasswordValidationSchema = z.object({
     newPassword: z.string().min(8),
   });
   
-  export const verifyPhoneSchema = z.object({phone:z.string()})
+  // export const verifyPhoneSchema = z.object({phone:z.string()})
 
   export const changePhoneNumberSchema = z.object({
     newPhone: z.string({required_error:"New phone  number is required."})
@@ -22,4 +23,15 @@ export const changePasswordValidationSchema = z.object({
   export const loginAttemptSchema = z.object({
     phone: z.string().nonempty("Name is required"),
  
+  })
+
+  export const verifyPhoneSchema = z.object({
+    phone:z.string().nonempty("Phone is required"),
+    requestType:z.nativeEnum(RequestType,{required_error:"requestType is required"})
+  })
+
+  export const verifyOtpSchema =  z.object({
+    phone:z.string().nonempty("phone is required"),
+    otp:z.string().nonempty("otp is required")
+
   })

@@ -5,6 +5,29 @@ import { userService } from "./user.services";
 import { Request, Response } from "express";
 import pick from "../../../shared/pick";
 import { userFilterableFields } from "./user.costant";
+import { User } from "@prisma/client";
+
+
+const checkEmail = catchAsync(async (req:Request, res: Response) =>{
+  console.log("check email")
+  const result = await userService.checkEmail(req.body)
+  sendResponse(res, {
+    statusCode:httpStatus.OK,
+    success:true,
+    message:"Email checked",
+    data:result
+  })
+})
+
+const checkUsername = catchAsync (async (req:Request, res:Response)=>{
+  const result = await userService.checkUsername(req.body)
+  sendResponse(res,{
+    statusCode:httpStatus.OK,
+    success:true,
+    message:"Username checked",
+    data:result
+  })
+})
 
 const createUser = catchAsync(async (req: Request, res: Response) => {
   const result = await userService.createUserIntoDb(req.body);
@@ -35,17 +58,17 @@ const getUsers = catchAsync(async (req: Request, res: Response) => {
 
 
 // get all user form db
-const updateProfile = catchAsync(async (req: Request & {user?:any}, res: Response) => {
-  const user = req?.user;
+// const updateProfile = catchAsync(async (req: Request & {user?:any}, res: Response) => {
+//   const user = req?.user;
 
-  const result = await userService.updateProfile(req);
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: "Profile updated successfully!",
-    data: result,
-  });
-});
+//   const result = await userService.updateProfile(req);
+//   sendResponse(res, {
+//     statusCode: httpStatus.OK,
+//     success: true,
+//     message: "Profile updated successfully!",
+//     data: result,
+//   });
+// });
 
 // const potentialMatches = await prisma.user.findMany({
 //   where: {
@@ -158,6 +181,8 @@ const getMyProfile = catchAsync(async (req:Request, res:Response)=>{
   
 })
 
+
+
 // *! update user role and account status
 const updateUser = catchAsync(async (req: Request, res: Response) => {
 const id = req.params.id;
@@ -182,6 +207,7 @@ const id = req.params.id;
 });
 // *! update user role and account status
 const getSingleUserById = catchAsync(async (req: Request, res: Response) => {
+  console.log(req.path)
 const id = req.params.id;
   const result = await userService.getSingleUserById(id);
   sendResponse(res, {
@@ -193,7 +219,7 @@ const id = req.params.id;
 });
 // Controller for fetching users for the home page
 const getUserForHomePage = catchAsync(async (req: Request, res: Response) => {
-  const authUserId = req.user.id; // Extract authenticated user's ID from request (assuming middleware sets req.user)
+  const authUserId = req.body; // Extract authenticated user's ID from request (assuming middleware sets req.user)
   const page = parseInt(req.query.page as string) || 1; // Default page 1
   const limit = parseInt(req.query.limit as string) || 20; // Default limit 20
   const sortBy = (req.query.sortBy as string) || "createdAt"; // Default sorting by "createdAt"
@@ -213,9 +239,11 @@ const getUserForHomePage = catchAsync(async (req: Request, res: Response) => {
 export const userController = {
   createUser,
   getUsers,
-  updateProfile,
+  // updateProfile,
   updateUser,
   getRandomUser,
   getUserForHomePage,
-  getSingleUserById
+  getSingleUserById,
+  checkEmail,
+  checkUsername
 };

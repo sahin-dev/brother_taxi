@@ -4,33 +4,39 @@ import { UserValidation } from "./user.validation";
 import { userController } from "./user.controller";
 import auth from "../../middlewares/auth.middleware";
 import { UserRole } from "@prisma/client";
-import { fileUploader } from "../../../helpers/fileUploader";
+// import { fileUploader } from "../../../helpers/fileUploader";
 
 const router = express.Router();
 
 // *!register user
 router.post(
   "/register",
-  //validateRequest(UserValidation.CreateUserValidationSchema),
+  validateRequest(UserValidation.CreateUserValidationSchema),
   userController.createUser
 );
 // *!get all  user
 router.get("/", userController.getUsers);
 router.get("/get-random-user", userController.getRandomUser);
 router.get("/get-user-home",auth(), userController.getUserForHomePage);
+router.post('/check-email',validateRequest(UserValidation.checkEmailSchema), userController.checkEmail)
+router.post('/check-username', userController.checkUsername)
 router.get("/:id", userController.getSingleUserById);
+router.put("/:id", userController.updateUser);
+
+
+
 
 // *!profile user
-router.put(
-  "/update-profile",
-  // validateRequest(UserValidation.userUpdateSchema),
+// router.put(
+//   "/update-profile",
+//   validateRequest(UserValidation.userUpdateSchema),
 
-  auth(UserRole.ADMIN, UserRole.USER),
-  fileUploader.uploadMultipleImage,
-  userController.updateProfile
-);
+//   auth(UserRole.ADMIN, UserRole.USER),
+//   fileUploader.uploadMultipleImage,
+//   userController.updateProfile
+// );
 
 // *!update  user
-router.put("/:id", userController.updateUser);
+
 
 export const userRoutes = router;

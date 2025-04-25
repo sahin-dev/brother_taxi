@@ -1,4 +1,5 @@
 import { UserRole } from "@prisma/client";
+import { boolean } from "zod";
 
 export interface IUser {
   id?: string;
@@ -22,4 +23,8 @@ export type IUserFilterRequest = {
   minAge?: number | undefined;
   maxAge?: number | undefined;
   distanceRange?: number | undefined;
+}
+
+export interface IUpdateGenderVisibility {
+  id:string
 }

@@ -3,57 +3,94 @@ import * as bcrypt from "bcrypt";
 import { Request } from "express";
 import httpStatus from "http-status";
 import config from "../../../config";
-import ApiError from "../../../errors/ApiErrors";
-import { fileUploader } from "../../../helpars/fileUploader";
-import { paginationHelper } from "../../../helpars/paginationHelper";
+import ApiError from "../../../errors/ApiError";
+// import { fileUploader } from "../../../helpers/fileUploader";
+import { paginationHelper } from "../../../helpers/paginationHelper";
 import { IPaginationOptions } from "../../../interfaces/paginations";
-import emailSender from "../../../shared/emailSender";
-import { generateOtpEmailHtml } from "../../../shared/html";
+import emailSender from "../../../shared/mailSender";
+// import { generateOtpEmailHtml } from "../../../shared/html";
 import prisma from "../../../shared/prisma";
 import { userSearchAbleFields } from "./user.costant";
-import { IUser, IUserFilterRequest } from "./user.interface";
-import { jwtHelpers } from "../../../helpars/jwtHelpers";
+import { IUpdateGenderVisibility, IUser, IUserFilterRequest } from "./user.interface";
+import { jwtHelpers } from "../../../helpers/jwt";
 import { PassThrough } from "stream";
 import { calculateAge } from "../../../shared/calculateAge";
 
+
+
+const initiateSignUp = async (phone:string)=>{
+  const existingUser = await prisma.user.findUnique({where:{phone:phone}})
+  if (existingUser){
+    throw new ApiError(httpStatus.BAD_REQUEST, `User with this phone ${phone} already exist`)
+  }
+  const otp = Math.floor(1000 + Math.random() * 9000)
+  const otpExpiry = new Date(Date.now() + 15 * 60 * 1000)
+
+}
+
+const checkEmail = async ({email}:{email:string})=>{
+  const user = await prisma.user.findUnique({where:{email:email}})
+  if (user){
+    throw new ApiError(httpStatus.CONFLICT, "User with this email already exist")
+  }
+  return {message:"email is accepted"}
+}
+
+const checkUsername = async ({username}:{username:string})=>{
+  const user = await prisma.user.findUnique({where:{username}})
+  if (user){
+    throw new ApiError(httpStatus.CONFLICT, "User with this username already exist")
+  }
+  return {message:"username is accepted"}
+}
+
 // Create a new user in the database.
-const createUserIntoDb = async (payload: User) => {
+const createUserIntoDb = async (payload:User) => {
   const existingUser = await prisma.user.findFirst({
     where: {
-      email: payload.email,
+      OR:[ {email:payload.email}, {username:payload.username}, {phone:payload.phone}]
     },
   });
 
   if (existingUser) {
-    if (existingUser.email === payload.email) {
+    if (existingUser.phone === payload.phone) {
+      throw new ApiError(
+        400,
+        `User with this phone ${payload.phone} already exists`
+      );
+    }else if (existingUser.email === payload.email){
       throw new ApiError(
         400,
         `User with this email ${payload.email} already exists`
       );
+    }else if (existingUser.username === payload.username){
+      throw new ApiError(
+        400,
+        `User with this username ${payload.username} already exists`
+      );
     }
   }
-  const hashedPassword: string = await bcrypt.hash(
-    payload.password,
-    Number(config.bcrypt_salt_rounds)
-  );
+
+  // const hashedPassword = await bcrypt.hash(
+  //   payload.password,
+  //   Number(config.bcrypt_salt_rounds)
+  // );
   // Generate OTP
-  const otp = Math.floor(1000 + Math.random() * 9000); // 6-digit OTP
-  const otpExpiry = new Date(Date.now() + 15 * 60 * 1000); // OTP expires in 15 minutes
+  // const otp = Math.floor(1000 + Math.random() * 9000); // 6-digit OTP
+  // const otpExpiry = new Date(Date.now() + 15 * 60 * 1000); // OTP expires in 15 minutes
 
   // Create the user and save the OTP and expiry in the database
   const newUser = await prisma.user.create({
     data: {
-      ...payload,
-      password: hashedPassword,
-      otp,
-      expirationOtp: otpExpiry,
+     ...payload
     },
     select: {
       id: true,
-      email: true,
-      phoneNumber: true,
-      role: true,
-      otp: true,
+      phone: true,
+      email:true,
+      username:true,
+      
+      // otp: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -63,15 +100,35 @@ const createUserIntoDb = async (payload: User) => {
   try {
     const emailSubject = "Your OTP for Account Verification";
 
-    const emailHtml = generateOtpEmailHtml(newUser.email, otp);
-    await emailSender(newUser.email, emailHtml, emailSubject);
-    console.log(`OTP sent to ${newUser.email}`);
+    //const emailHtml = generateOtpEmailHtml(newUser.email, otp);
+    //await emailSender(newUser.email, emailHtml, emailSubject);
+    //console.log(`OTP sent to ${newUser.email}`);
   } catch (error) {
     console.error(`Failed to send OTP email:`, error);
   }
 
   return newUser;
 };
+
+const deleteAccount = async ({id}:{id:string})=>{
+  const user = await prisma.user.findUnique({where:{id}})
+  if (!user){
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found")
+  }
+  await prisma.user.delete({where:{id}})
+  return {message:"User deleted successfully"}
+}
+
+
+const updateGenderVisibility = async (payload:IUpdateGenderVisibility)=>{
+  const user = await prisma.user.findUnique({where:{id:payload.id}})
+  if (!user){
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found")
+  }
+  await prisma.user.update({where:{id:user.id},data:{genderVisibility:(!user.genderVisibility)}})
+  return {message:"Gender visibility updated!"}
+}
+
 
 // reterive all users from the database also searcing anf filetering
 const getUsersFromDb = async (
@@ -152,88 +209,85 @@ const getUserProfile = async (userId:string)=>{
 }
 
 // update profile by user won profile uisng token or email and id
-const updateProfile = async (req: Request) => {
- try {
-  const files = req.files as any;
+// const updateProfile = async (req: Request&{user?:any}) => {
+//  try {
+//   const files = req.files as any;
 
-  const stringData = req.body.data;
+//   const stringData = req.body.data;
  
-  let images;
-  let parseData;
+//   let images;
+//   let parseData;
 
-  const existingUser = await prisma.user.findFirst({
-    where: {
-      id: req.user.id,
-    },
-  });
-  if (!existingUser) {
-    throw new ApiError(404, "User not found");
-  }
-  if (files.images) {
+//   const existingUser = await prisma.user.findFirst({
+//     where: {
+//       id: req.user?.id,
+//     },
+//   });
+//   if (!existingUser) {
+//     throw new ApiError(404, "User not found");
+//   }
+//   if (files.images) {
 
-    images = await Promise.all(
-      files?.images?.map(async (file: any) => {
-        const response = await fileUploader.uploadToDigitalOcean(file);
-        return { url: response.Location }; // Extract and return only the file URL
-      })
-    );
-  }
-  if (stringData) {
-    parseData = JSON.parse(stringData);
-  }
-if(parseData?.dob){
-  parseData.dob = new Date(parseData.dob).toISOString();
-}
+//     images = await Promise.all(
+//       files?.images?.map(async (file: any) => {
+//         const response = await fileUploader.uploadToDigitalOcean(file);
+//         return { url: response.Location }; // Extract and return only the file URL
+//       })
+//     );
+//   }
+//   if (stringData) {
+//     parseData = JSON.parse(stringData);
+//   }
+// if(parseData?.dob){
+//   parseData.dob = new Date(parseData.dob).toISOString();
+// }
   
 
-  const result = await prisma.user.update({
-    where: {
-      id: existingUser.id,
-    },
-    data: {
-      ...parseData,
-      isCompleteProfile: true,
-      photos: (parseData?.photos || images)
-        ? [...(parseData?.photos || []), ...(images || [])]?.map((item) => {
-            if (typeof item === "object" && item?.url) {
-              return item;
-            }
-            return { url: item };
-          })
-        : [], // Default to an empty array if neither photos nor images exist
-    },
+//   const result = await prisma.user.update({
+//     where: {
+//       id: existingUser.id,
+//     },
+//     data: {
+//       ...parseData,
+//       isCompleteProfile: true,
+//       photos: (parseData?.photos || images)
+//         ? [...(parseData?.photos || []), ...(images || [])]?.map((item) => {
+//             if (typeof item === "object" && item?.url) {
+//               return item;
+//             }
+//             return { url: item };
+//           })
+//         : [], // Default to an empty array if neither photos nor images exist
+//     },
     
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      phoneNumber: true,
-      ethnicity: true,
-      gender: true,
-      dob: true,
-      hight: true,
-      weight: true,
-      sexOrientation: true,
-      education: true,
-      interest: true,
-      distance: true,
-      favoritesFood: true,
-      photos: true,
-      about: true,
-      lat: true,
-      long: true,
-      isCompleteProfile: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
+//     select: {
+//       id: true,
+//       email: true,
+//       name: true,
+//       phone: true,
+//       gender: true,
+//       dob: true,
+//       sexOrientation: true,
+//       education: true,
+//       interests: true,
+//       distance: true,
+//       favoritesFood: true,
+//       photos: true,
+//       about: true,
+//       lat: true,
+//       long: true,
+//       isCompleteProfile: true,
+//       createdAt: true,
+//       updatedAt: true,
+//     },
+//   });
 
   
-  return result;
- } catch (error:any) {
-  throw new ApiError(httpStatus.NOT_ACCEPTABLE,error.message)
- }
-};
+//   return result;
+//  } catch (error:any) {
+//   throw new ApiError(httpStatus.NOT_ACCEPTABLE,error.message)
+//  }
+// };
 
 // update user data into database by id for admin
 const updateUserIntoDb = async (payload: IUser, id: string) => {
@@ -411,7 +465,7 @@ const getUserForHomePage = async (
       gender:true,
       distance: true,
       favoritesFood: true,
-      interest: true,
+      interests: true,
       photos: true,
       about: true,
       sexOrientation: true, // Fetching the sexOrientation field
@@ -443,7 +497,7 @@ const getUserForHomePage = async (
         {
           OR: [
             { favoritesFood: { hasSome: authUser.favoritesFood || [] } },
-            { interest: { hasSome: authUser.interest || [] } },
+            { interest: { hasSome: authUser.interests || [] } },
           ],
         },
         genderFilter, // Apply gender filter
@@ -453,13 +507,12 @@ const getUserForHomePage = async (
       id: true,
       email: true,
       gender: true,
-      ethnicity: true,
       dob: true,
       role: true,
       name: true,
       favoritesFood: true,
       photos: true,
-      interest: true,
+      interests: true,
       lat: true,
       long: true,
       createdAt: true,
@@ -489,19 +542,18 @@ const getUserForHomePage = async (
   if (filteredUsers.length === 0) {
     const allUsers = await prisma.user.findMany({
       where: {
-        id: { not: authUserId },gender: { not: authUser.gender}
+       AND:[ {id: { not: authUserId }}]
       },
       select: {
         id: true,
         email: true,
         gender: true,
-        ethnicity: true,
         dob: true,
         role: true,
         name: true,
         favoritesFood: true,
         photos: true,
-        interest: true,
+        interests: true,
         lat: true,
         long: true,
         createdAt: true,
@@ -575,15 +627,12 @@ const getSingleUserById = async (id:string) => {
       id: true,
       email: true,
       name: true,
-      phoneNumber: true,
-      ethnicity: true,
+      phone: true,
       gender: true,
       dob: true,
-      hight: true,
-      weight: true,
       sexOrientation: true,
       education: true,
-      interest: true,
+      interests: true,
       distance: true,
       favoritesFood: true,
       photos: true,
@@ -605,9 +654,12 @@ if(user?.dob){
 export const userService = {
   createUserIntoDb,
   getUsersFromDb,
-  updateProfile,
+  // updateProfile,
   updateUserIntoDb,
   getRandomUser,
   getUserForHomePage,
-  getSingleUserById
+  getSingleUserById,
+  checkEmail,
+  checkUsername,
+  updateGenderVisibility
 };

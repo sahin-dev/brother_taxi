@@ -26,7 +26,7 @@ const ErrorHandler = (
 
   // Handle Zod Validation Errors
   if (err instanceof ZodError) {
-    const simplifiedError = handleZodError(err);
+    const simplifiedError = handleZodError(err || []);
     statusCode = simplifiedError?.statusCode;
     message = simplifiedError?.message;
     errorSources = simplifiedError?.errorSources;
