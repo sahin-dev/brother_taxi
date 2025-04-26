@@ -12,7 +12,7 @@ const verifyPhone = catchAsync(async (req:Request, res:Response)=>{
   ApiResponse(res,{
     statusCode:httpStatus.OK,
     success:true,
-    message:"Otp sent successfully",
+    message:"OTP sent successfully",
     data:result
   })
 })
