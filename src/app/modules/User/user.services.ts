@@ -120,6 +120,8 @@ const deleteAccount = async ({id}:{id:string})=>{
 }
 
 
+
+
 const updateGenderVisibility = async (payload:IUpdateGenderVisibility)=>{
   const user = await prisma.user.findUnique({where:{id:payload.id}})
   if (!user){

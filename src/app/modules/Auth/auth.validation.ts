@@ -4,7 +4,8 @@ import z from 'zod'
 
 export const UserLoginValidationSchema = z.object({
     phone: z.string().nonempty("Name is required"),
-    otp: z.string({required_error:"Otp is required"})
+    otp: z.string({required_error:"Otp is required"}),
+    fcmtoken:z.string().optional()
  
   });
   

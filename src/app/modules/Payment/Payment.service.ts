@@ -8,6 +8,7 @@ import Stripe from 'stripe';
 import prisma from '../../../shared/prisma';
 import ApiError from '../../../errors/ApiError';
 import { IUser } from '../User/user.interface';
+import { User } from '@prisma/client';
 
 
 
@@ -274,7 +275,7 @@ const buySubscription = async (payload: IBuySubscription, user: JwtPayload) => {
   }
 };
 
-const updateSubscription = async (payload: any, user: IUser) => {
+const updateSubscription = async (payload: any, user: User) => {
   const ExistingUser = await prisma.user.findFirst({ where: { id: user.id } });
   if (!ExistingUser) {
     throw new Error('User not found');

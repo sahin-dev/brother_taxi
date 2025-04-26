@@ -1,6 +1,7 @@
-import ApiError from "../../../errors/ApiErrors";
+import ApiError from "../../../errors/ApiError";
 import prisma from "../../../shared/prisma";
 import admin from "./firebaseAdmin";
+import httpStatus from "http-status";
 
 // Send notification to a single user
 const sendSingleNotification = async (req: any) => {
@@ -94,7 +95,7 @@ const sendNotifications = async (req: any) => {
 
     const successIndices = response.responses
       .map((res: any, idx: number) => (res.success ? idx : null))
-      .filter((_, idx: number) => idx !== null) as number[];
+      .filter((_:any, idx: number) => idx !== null) as number[];
 
     const successfulUsers = successIndices.map((idx) => users[idx]);
 
@@ -111,7 +112,7 @@ const sendNotifications = async (req: any) => {
 
     const failedTokens = response.responses
       .map((res: any, idx: number) => (!res.success ? fcmTokens[idx] : null))
-      .filter((token): token is string => token !== null);
+      .filter((token:any): token is string => token !== null);
 
     return {
       successCount: response.successCount,
@@ -246,9 +247,24 @@ const getSingleNotificationFromDB = async (
   }
 };
 
+const readNotification  = async (userId:string,notificationId:string)=>{
+  const notification = await prisma.notification.findUnique({where:{id:notificationId}})
+
+  if (!notification){
+    throw new ApiError(404, "Api not found")
+  }
+
+  if (notification.receiverId !== userId){
+    throw new ApiError(httpStatus.BAD_REQUEST, "You are not allowed to read other's notificatino!")
+  }
+  await prisma.notification.update({where:{id:notificationId}, data:{isRead:true}})
+  return {message:"Notification read successfully."}
+}
+
 export const notificationServices = {
   sendSingleNotification,
   sendNotifications,
   getNotificationsFromDB,
   getSingleNotificationFromDB,
+  readNotification
 };

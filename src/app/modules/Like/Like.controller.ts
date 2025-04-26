@@ -1,6 +1,6 @@
 import { JwtPayload } from "jsonwebtoken";
 import catchAsync from "../../../shared/catchAsync";
-import sendResponse from "../../../shared/sendResponse";
+import sendResponse from "../../../shared/ApiResponse";
 import pick from "../../../shared/pick";
 import { LikeService } from "./Like.service";
 import { likeFilterableFields } from "./Like.constant";

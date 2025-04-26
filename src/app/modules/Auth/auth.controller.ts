@@ -50,30 +50,31 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
 });
 
 
-// const logoutUser = catchAsync(async (req: Request, res: Response) => {
-//   // Clear the token cookie
-//   res.clearCookie("token", {
-//     httpOnly: true,
-//     secure: process.env.NODE_ENV === "production",
-//     sameSite: "lax",
-//   });
+const logoutUser = catchAsync(async (req: Request, res: Response) => {
+  // Clear the token cookie
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+  });
 
-//   ApiResponse(res, {
-//     statusCode: httpStatus.OK,
-//     success: true,
-//     message: "User Successfully logged out",
-//     data: null,
-//   });
-// });
+  ApiResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "User Successfully logged out",
+    data: null,
+  });
+});
 
 // // get user profile
 const getMyProfile = catchAsync(async (req: Request, res: Response) => {
-  const userToken = req.headers.authorization;
+ 
+  const userToken = req.headers.authorization?.split(" ")[1] || "";
 
-  const result = await AuthServices.getMyProfile(userToken as string);
+  const result = await AuthServices.getMyProfile(userToken);
   ApiResponse(res, {
     success: true,
-    statusCode: 201,
+    statusCode: 200,
     message: "User profile retrieved successfully",
     data: result,
   });
@@ -158,7 +159,7 @@ const getMyProfile = catchAsync(async (req: Request, res: Response) => {
 
 export const AuthController = {
   loginUser,
-//   logoutUser,
+  logoutUser,
   getMyProfile,
   verifyPhone, 
   verifyOtp,

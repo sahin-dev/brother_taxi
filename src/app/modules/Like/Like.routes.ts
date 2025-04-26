@@ -1,6 +1,6 @@
 import { UserRole } from "@prisma/client";
 import { Router } from "express";
-import auth from "../../middlewares/auth";
+import auth from "../../middlewares/auth.middleware";
 import { likeController } from "./Like.controller";
 
 const router = Router();

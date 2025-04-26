@@ -5,7 +5,7 @@ import { chatValidation } from './chat.validation';
 import { UserRole } from '@prisma/client';
 import auth from '../../middlewares/auth.middleware';
 import { chatController } from './chat.controller';
-import { fileUploader } from '../../../helpars/fileUploader';
+import { fileUploader } from '../../../helpers/fileUploader';
 
 const router = express.Router();
 

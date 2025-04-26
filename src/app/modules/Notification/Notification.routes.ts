@@ -1,5 +1,5 @@
 import express from "express";
-import auth from "../../middlewares/auth";
+import auth from "../../middlewares/auth.middleware";
 import { notificationController } from "./Notification.controller";
 
 const router = express.Router();
@@ -10,6 +10,7 @@ router.post(
   notificationController.sendNotification
 );
 
+router.put('/read/:notificationId', auth(), notificationController.readNotification)
 router.post(
   "/send-notification",
   auth(),

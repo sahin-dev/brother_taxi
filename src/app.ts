@@ -5,8 +5,21 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import router from "./app/routes";
 import ErrorHandler from "./app/middlewares/error.middleware";
+import { User } from "@prisma/client";
 
 const app: Application = express();
+
+
+declare global {
+  namespace Express {
+    interface Request {
+      user: User;
+    }
+  }
+}
+
+
+
 export const corsOptions = {
   origin: ["http://localhost:3001", "http://localhost:3000"],
   methods: ["GET", "POST", "PUT", "DELETE"],

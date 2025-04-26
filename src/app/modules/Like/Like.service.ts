@@ -1,9 +1,9 @@
 import httpStatus from "http-status";
 import prisma from "../../../shared/prisma";
-import ApiError from "../../../errors/ApiErrors";
+import ApiError from "../../../errors/ApiError";
 import { JwtPayload } from "jsonwebtoken";
 import { IUserFilterRequest } from "../User/user.interface";
-import { paginationHelper } from "../../../helpars/paginationHelper";
+import { paginationHelper } from "../../../helpers/paginationHelper";
 import { IPaginationOptions } from "../../../interfaces/paginations";
 import { Prisma } from "@prisma/client";
 
@@ -214,13 +214,12 @@ const getAllMyLikeUsers = async (
           name: true,
           photos: true,
           gender: true,
-          ethnicity: true,
           email: true,
           dob: true,
           lat: true,
           long: true,
           favoritesFood: true,
-          interest: true,
+          interests: true,
         },
       },
     },
@@ -245,9 +244,8 @@ const getAllMyLikeUsers = async (
             photos: like.receiver.photos,
             gender: like.receiver.gender,
             dob: like.receiver.dob,
-            ethnicity: like.receiver.ethnicity,
             favoritesFood: like.receiver.favoritesFood,
-            interest: like.receiver.interest,
+            interest: like.receiver.interests,
             email: like.receiver.email,
             distance: distance.toFixed(2), 
           };
@@ -333,13 +331,12 @@ const getPeerLikes = async (
           name: true,
           photos: true,
           gender: true,
-          ethnicity: true,
           email: true,
           dob: true,
           lat: true,
           long: true,
           favoritesFood: true,
-          interest: true,
+          interests: true,
         },
       },
       sender: {
@@ -348,13 +345,12 @@ const getPeerLikes = async (
           name: true,
           photos: true,
           gender: true,
-          ethnicity: true,
           email: true,
           dob: true,
           lat: true,
           long: true,
           favoritesFood: true,
-          interest: true,
+          interests: true,
         },
       },
     },
@@ -378,9 +374,8 @@ const getPeerLikes = async (
             photos: peerUser.photos,
             gender: peerUser.gender,
             dob: peerUser.dob,
-            ethnicity: peerUser.ethnicity,
             favoritesFood: peerUser.favoritesFood,
-            interest: peerUser.interest,
+            interest: peerUser.interests,
             email: peerUser.email,
             distance: distance.toFixed(2),
           };

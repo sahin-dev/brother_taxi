@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { PaymentService } from './Payment.service';
 import httpStatus from 'http-status';
 import catchAsync from '../../../shared/catchAsync';
-import sendResponse from '../../../shared/sendResponse';
+import sendResponse from '../../../shared/ApiResponse';
 import { IUser } from '../User/user.interface';
 
 
@@ -62,7 +62,7 @@ const deletePrice = catchAsync(async (req: Request, res: Response) => {
 });
 // buy subscription
 const buySubscription = catchAsync(async (req: Request, res: Response) => {
-  const result = await PaymentService.buySubscription(req.body,req.user as IUser);
+  const result = await PaymentService.buySubscription(req.body,req.user);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -71,7 +71,7 @@ const buySubscription = catchAsync(async (req: Request, res: Response) => {
   });
 });
 const updateSubscription = catchAsync(async (req: Request, res: Response) => {
-  const result = await PaymentService.updateSubscription(req.body,req.user as IUser);
+  const result = await PaymentService.updateSubscription(req.body,req.user);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -80,7 +80,7 @@ const updateSubscription = catchAsync(async (req: Request, res: Response) => {
   });
 });
 const cancelSubscription = catchAsync(async (req: Request, res: Response) => {
-  const result = await PaymentService.cancelSubscription(req.user as IUser);
+  const result = await PaymentService.cancelSubscription(req.user);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,

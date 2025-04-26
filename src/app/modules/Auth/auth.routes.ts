@@ -26,7 +26,7 @@ router.post(
 
 
 // // user logout route
-// router.post("/logout", AuthController.logoutUser);
+router.post("/logout", AuthController.logoutUser);
 
 router.get(
   "/get-me",

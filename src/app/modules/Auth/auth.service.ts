@@ -26,8 +26,10 @@ const initiateLogin = async (payload: {phone:string})=>{
     const existingOtp = await prisma.otp.findUnique({where:{phone:payload.phone}})
     if(existingOtp){
       await prisma.otp.update({where:{id:existingOtp.id},data:{otp,expiresIn:expirationDate}})
+    }else{
+      await prisma.otp.create({data:{otp,expiresIn:expirationDate,phone:payload.phone}})
     }
-    await prisma.otp.create({data:{otp,expiresIn:expirationDate,phone:payload.phone}})
+    
     // await redis.setex(payload.phone,300,otp)
     return {message:  "Otp generated successfully"}
 
@@ -42,19 +44,24 @@ const initiateLogin = async (payload: {phone:string})=>{
 
 
 // user login
-const loginUser = async (payload: {phone: string,otp:string}) => {
+const loginUser = async (payload: {phone: string,otp:string,fcmtoken?:string}) => {
+  
   const user = await prisma.user.findUnique({where:{phone:payload.phone}})
+
   if(!user){
     throw new ApiError(httpStatus.NOT_FOUND, "User not found!")
   }
-  const otp = await prisma.otp.findUnique({where:{phone:payload.phone}})
+  const otp = await prisma.otp.findUnique({where:{phone:payload.phone,otp:payload.otp}})
+  
   if (!otp){
     throw new ApiError (httpStatus.BAD_REQUEST, "Otp not found")
   }
   if (payload.otp !== otp.otp){
-    throw new ApiError(httpStatus.BAD_REQUEST, )
+    throw new ApiError(httpStatus.BAD_REQUEST, "Otp is incorrect")
   }
-  if (user.otp !== payload.otp || !user.otpExpiresIn || user.otpExpiresIn < new Date()){
+
+ 
+  if (!otp.expiresIn || (new Date(otp.expiresIn).toISOString() < new Date().toISOString())){
     throw new ApiError(httpStatus.BAD_REQUEST, "Otp is invalid")
   }
   // const userData = await prisma.user.findUnique({
@@ -69,7 +76,7 @@ const loginUser = async (payload: {phone: string,otp:string}) => {
   //     "User not found! with this phone " + payload.phone
   //   );
   // }
-await prisma.user.update({where:{phone:payload.phone}, data:{otp:null, otpExpiresIn:null}})
+await prisma.otp.update({where:{phone:payload.phone}, data:{otp:""}})
 //   const isCorrectPassword: boolean = await bcrypt.compare(
 //     payload.password,
 //     userData.password
@@ -79,16 +86,17 @@ await prisma.user.update({where:{phone:payload.phone}, data:{otp:null, otpExpire
 //     throw new ApiError(httpStatus.BAD_REQUEST, "Password incorrect!");
 //   }
 
-//   if (payload && payload.fcmToken) {
-//     await prisma.user.update({
-//       where: { id: userData.id },
-//       data: { fcmToken: payload.fcmToken },
-//     });
-//   }
+  if (payload && payload.fcmtoken) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { fcmToken: payload.fcmtoken },
+    });
+  }
+
   const accessToken = generateToken(
     {
       id: user.id,
-      email: user.email
+      phone: user.phone
     },
     config.jwt.jwt_secret as Secret,
     config.jwt.expires_in as string

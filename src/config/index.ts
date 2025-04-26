@@ -1,9 +1,11 @@
 import dotenv from 'dotenv';
+import e from 'express';
 import path from 'path';
 
 dotenv.config({ path: path.join(process.cwd(), '.env') });
 
-export default {
+
+const config =  {
     env: process.env.NODE_ENV,
     stripe_key:process.env.STRIPE_SECRET_KEY,
     port: process.env.PORT,
@@ -23,3 +25,4 @@ export default {
     },
 
 }
+export default config

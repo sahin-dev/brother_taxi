@@ -21,7 +21,7 @@ model User {
   budgetMin         Int?
   budgetMax         Int?
   travelPartner     TravelPartner?
-  deleted           Boolean?
+  deleted           Boolean @default(false)
 
   gender            GenderDescription
   genderVisibility  Boolean?        @default(false)
@@ -70,7 +70,7 @@ model User {
   roomsReceived     Room[]         @relation("ReceiverRelation")
   chatsSent         Chat[]         @relation("SenderRelation")
   chatsReceived     Chat[]         @relation("ReceiverRelation")
-
+  trips             Trip[]
   @@map("users")
 }
 
@@ -147,6 +147,20 @@ model Notification {
   updatedAt  DateTime @updatedAt
 
   @@map("notifications")
+}
+
+model Trip{
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  images      String[]
+  lat         String
+  lan         String
+  userId      String @db.ObjectId
+  user        User   @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("trips")
 }
 
 model Like {

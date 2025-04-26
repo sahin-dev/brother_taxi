@@ -15,7 +15,8 @@ const auth = (...roles: string[]) => {
     next: NextFunction
   ) => {
     try {
-      const token = req.headers.authorization;
+      const token = req.headers.authorization?.split(" ")[1];
+    
 
       if (!token) {
         throw new ApiError(httpStatus.UNAUTHORIZED, "You are not authorized!");
@@ -25,13 +26,15 @@ const auth = (...roles: string[]) => {
         token,
         config.jwt.jwt_secret as Secret
       );
-      const { id, role, iat } = verifiedUser;
+    
+      const { id, phone, iat } = verifiedUser;
 
       const user = await prisma.user.findUnique({
         where: {
           id: id,
         },
       });
+      
       if (!user) {
         throw new ApiError(httpStatus.NOT_FOUND, "User not found!");
       }
