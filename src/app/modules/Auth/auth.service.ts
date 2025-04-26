@@ -42,14 +42,20 @@ const initiateLogin = async (payload: {phone:string})=>{
 
 
 // user login
-const loginUser = async (payload: {phone: string,otp:number}) => {
+const loginUser = async (payload: {phone: string,otp:string}) => {
   const user = await prisma.user.findUnique({where:{phone:payload.phone}})
   if(!user){
     throw new ApiError(httpStatus.NOT_FOUND, "User not found!")
   }
-
+  const otp = await prisma.otp.findUnique({where:{phone:payload.phone}})
+  if (!otp){
+    throw new ApiError (httpStatus.BAD_REQUEST, "Otp not found")
+  }
+  if (payload.otp !== otp.otp){
+    throw new ApiError(httpStatus.BAD_REQUEST, )
+  }
   if (user.otp !== payload.otp || !user.otpExpiresIn || user.otpExpiresIn < new Date()){
-    throw new ApiError(httpStatus.BAD_REQUEST, "Otp is inavlid")
+    throw new ApiError(httpStatus.BAD_REQUEST, "Otp is invalid")
   }
   // const userData = await prisma.user.findUnique({
   //   where: {
