@@ -14,7 +14,7 @@ import config from '../../../config';
 
 
 const stripe = require('stripe')(
-  config.stripe_key
+
 );
 
 export interface IBuySubscription {
