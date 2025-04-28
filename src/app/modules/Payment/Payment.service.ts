@@ -9,11 +9,12 @@ import prisma from '../../../shared/prisma';
 import ApiError from '../../../errors/ApiError';
 import { IUser } from '../User/user.interface';
 import { User } from '@prisma/client';
+import config from '../../../config';
 
 
 
 const stripe = require('stripe')(
-  'sk_test_51RIePXIs4KnEBGjt1leymsw8iOFCTBHhQeJT1BTR7wN5WpxpcwswUUNa5inWdMSuXwKsgkChO19oVXyIvNarQ7hi00zMpyLIMO'
+  config.stripe_key
 );
 
 export interface IBuySubscription {
