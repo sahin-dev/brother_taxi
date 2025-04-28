@@ -13,7 +13,7 @@ import { User } from '@prisma/client';
 
 
 const stripe = require('stripe')(
-  
+  'sk_test_51RIePXIs4KnEBGjt1leymsw8iOFCTBHhQeJT1BTR7wN5WpxpcwswUUNa5inWdMSuXwKsgkChO19oVXyIvNarQ7hi00zMpyLIMO'
 );
 
 export interface IBuySubscription {
@@ -46,7 +46,7 @@ const createPrice = async (payload: any) => {
         },
         product: product.id,
       });
-
+      console.log(price)
       // Step 3: Create Price Record in Database
       const dbPrice = await tx.price.create({
         data: {
@@ -76,6 +76,7 @@ const createPrice = async (payload: any) => {
 // Read All Prices
 const getAllPrices = async () => {
   const prices = await prisma.price.findMany();
+  
   return prices;
 };
 
@@ -405,8 +406,7 @@ const handelPaymentWebhook = async (req: Request) => {
     case 'invoice.payment_succeeded': {
       // Retrieve the product details
       const productIndex = invoice.lines.data.length - 1; // Corrected index for last product
-      const productId = invoice.lines.data[productIndex]?.plan
-        ?.product as string;
+      const productId = "invoice.lines.data[productIndex]?.plan?.product as string";
 
       const product = await stripe.products.retrieve(productId);
 
@@ -414,7 +414,7 @@ const handelPaymentWebhook = async (req: Request) => {
         amount: ((invoice.amount_paid / 100) as number) || 0,
         date: new Date() || '', // Use a proper date object
         subscriptionPlane: (product?.name as string) || '',
-        subscriptionId: (invoice?.subscription as string) || '',
+        // subscriptionId: (invoice?.subscription as string) || '',
         tranId: (invoice?.number as string) || '',
         status: (invoice?.status as string) || '',
         invoice_pdf: (invoice?.invoice_pdf as string) || ' ',

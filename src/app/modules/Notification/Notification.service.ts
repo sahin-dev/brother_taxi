@@ -17,10 +17,9 @@ const sendSingleNotification = async (req: any) => {
     const user = await prisma.user.findUnique({
       where: { id: userId },
     });
-    console.log(user)
-    console.log(user?.fcmToken);
+
     if (!user || !user.fcmToken) {
-   return 
+      throw new ApiError(httpStatus.NOT_FOUND, "User firebase client token is invalid") 
     }
 
     const message = {
@@ -211,6 +210,10 @@ const getSingleNotificationFromDB = async (
       },
     });
 
+    if( !notification){
+      throw new ApiError (httpStatus.NOT_FOUND, "Notification not found!")
+    }
+
     // Mark the notification as read
     const updatedNotification = await prisma.notification.update({
       where: { id: notificationId },
@@ -251,14 +254,15 @@ const readNotification  = async (userId:string,notificationId:string)=>{
   const notification = await prisma.notification.findUnique({where:{id:notificationId}})
 
   if (!notification){
-    throw new ApiError(404, "Api not found")
+    throw new ApiError(404, "Notification not found")
   }
 
   if (notification.receiverId !== userId){
     throw new ApiError(httpStatus.BAD_REQUEST, "You are not allowed to read other's notificatino!")
   }
   await prisma.notification.update({where:{id:notificationId}, data:{isRead:true}})
-  return {message:"Notification read successfully."}
+
+  return notification
 }
 
 export const notificationServices = {

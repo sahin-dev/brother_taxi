@@ -4,6 +4,7 @@ import { fileUploader } from '../../../helpers/fileUploader';
 import prisma from '../../../shared/prisma';
 
 const saveChatIntoDb = async (user: any, payload: any) => {
+  
   const chat = await prisma.chat.create({
     data: {
       message: payload.message,

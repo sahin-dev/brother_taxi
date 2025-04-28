@@ -1,6 +1,6 @@
 import httpStatus from "http-status";
 import prisma from "../../../shared/prisma";
-import ApiError from "../../../errors/ApiErrors";
+import ApiError from "../../../errors/ApiError";
 import { JwtPayload } from "jsonwebtoken";
 
 const toggleDisLike = async (id: string, user: any) => {

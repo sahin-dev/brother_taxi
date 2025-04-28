@@ -7,6 +7,7 @@ import httpStatus from "http-status";
 import ApiError from "../../errors/ApiError";
 import { verifyToken } from "../../helpers/jwt";
 import prisma from "../../shared/prisma";
+import { User } from "@prisma/client";
 
 const auth = (...roles: string[]) => {
   return async (
@@ -26,7 +27,7 @@ const auth = (...roles: string[]) => {
         token,
         config.jwt.jwt_secret as Secret
       );
-    
+      console.log(verifiedUser)
       const { id, phone, iat } = verifiedUser;
 
       const user = await prisma.user.findUnique({
@@ -43,9 +44,9 @@ const auth = (...roles: string[]) => {
         throw new ApiError(httpStatus.FORBIDDEN, "Your account is blocked!");
       }
 
-      req.user = verifiedUser as JwtPayload;
-
-      if (roles.length && !roles.includes(verifiedUser.role)) {
+      req.user = user;
+      console.log(user.role)
+      if (roles.length && !roles.includes(user.role)) {
         throw new ApiError(httpStatus.FORBIDDEN, "Forbidden!");
       }
       next();

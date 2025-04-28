@@ -1,7 +1,7 @@
 
 import { JwtPayload } from "jsonwebtoken";
 import catchAsync from "../../../shared/catchAsync";
-import sendResponse from "../../../shared/sendResponse";
+import sendResponse from "../../../shared/ApiResponse";
 import { disLikeService } from "./DisLike.service";
 
 
