@@ -10,7 +10,7 @@ datasource db {
 model User {
   id                String         @id @default(auto()) @map("_id") @db.ObjectId
   email             String?         @unique
-  phone             String         @unique
+  phone             String?         @unique
   username          String?         @unique
   dob               DateTime?
   residence_country String?
@@ -23,14 +23,14 @@ model User {
   travelPartner     TravelPartner?
   deleted           Boolean @default(false)
 
-  gender            GenderDescription
+  gender            GenderDescription?
   genderVisibility  Boolean?        @default(false)
   tripType          TripType?
   tripDuration      TripDuration?
   tripContinent  String?
   tripCountry String?
   interestAgeGroup  AgeGroup?
-  otp            Int?
+  otp            String?
   otpExpiresIn   DateTime?
   status            UserStatus?     @default(INACTIVE)
 
@@ -71,6 +71,7 @@ model User {
   chatsSent         Chat[]         @relation("SenderRelation")
   chatsReceived     Chat[]         @relation("ReceiverRelation")
   trips             Trip[]
+  // otp                Otp
   @@map("users")
 }
 
@@ -89,12 +90,13 @@ type GenderDescription {
 
 model Otp {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String @db.ObjectId
   phone     String  @unique
   otp       String
   expiresIn DateTime  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
+  // user      User      @relation(fields: [userId], references: [id])
   @@map("otps")
 }
 

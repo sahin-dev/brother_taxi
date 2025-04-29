@@ -6,6 +6,22 @@ import { Request, Response } from "express";
 import pick from "../../../shared/pick";
 import { userFilterableFields } from "./user.costant";
 import { User } from "@prisma/client";
+import ApiError from "../../../errors/ApiError";
+import { generateOtp } from "../../../helpers/generateOtp";
+import prisma from "../../../shared/prisma";
+
+
+const setUserPhone =  catchAsync(async (req:Request, res:Response)=>{
+  const result = await userService.setUserPhone(req.user.id, req.body)
+  
+
+  sendResponse(res,{
+    statusCode:httpStatus.OK,
+    success:true,
+    message:"Otp sent",
+    data:result
+  })
+})
 
 
 const checkEmail = catchAsync(async (req:Request, res: Response) =>{
@@ -143,5 +159,6 @@ export const userController = {
   getUserForHomePage,
   getSingleUserById,
   checkEmail,
-  checkUsername
+  checkUsername,
+  setUserPhone
 };

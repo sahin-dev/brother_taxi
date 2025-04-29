@@ -15,8 +15,31 @@ import { IUpdateGenderVisibility, IUser, IUserFilterRequest } from "./user.inter
 import { jwtHelpers } from "../../../helpers/jwt";
 import { PassThrough } from "stream";
 import { calculateAge } from "../../../shared/calculateAge";
+import { generateOtp } from "../../../helpers/generateOtp";
 
 
+const setUserPhone  = async (id:any, {phone}:{phone:string})=>{
+  const checkPhone = await prisma.user.findUnique({where:{phone}})
+  if(checkPhone){
+    throw new ApiError (httpStatus.BAD_REQUEST,"Phone is already exist")
+  }
+  
+  const user = await prisma.user.findUnique({where:{id}})
+
+  if(!user){
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found")
+  }
+  const otp = generateOtp()
+  const expiresIn = new Date(Date.now()+ 5 * 60 * 1000)
+  await prisma.user.update({where:{id}, data:{otp, otpExpiresIn:expiresIn}})
+
+  return {message:"Otp sent to your phone"}
+
+}
+
+const addPhone = async (otp:string, phone:string)=>{
+
+}
 
 const initiateSignUp = async (phone:string)=>{
   const existingUser = await prisma.user.findUnique({where:{phone:phone}})
@@ -663,5 +686,6 @@ export const userService = {
   getSingleUserById,
   checkEmail,
   checkUsername,
-  updateGenderVisibility
+  updateGenderVisibility,
+  setUserPhone
 };

@@ -34,7 +34,9 @@ const userUpdateSchema = z.object({
   lastName: z.string().optional(),
   dob: z.string().optional(),
   interests: z.array(z.nativeEnum(InterestType)).optional(),
-  username:z.string().optional()
+  username:z.string().optional(),
+  email:z.string().email().optional(),
+  phone:z.string().optional()
 });
 
 const checkEmailSchema = z.object({

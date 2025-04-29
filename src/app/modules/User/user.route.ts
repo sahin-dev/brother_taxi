@@ -1,4 +1,4 @@
-import express from "express";
+import express, {Request, Response} from "express";
 import validateRequest from "../../middlewares/validation.middleware";
 import { UserValidation } from "./user.validation";
 import { userController } from "./user.controller";
@@ -14,6 +14,7 @@ router.post(
   validateRequest(UserValidation.CreateUserValidationSchema),
   userController.createUser
 );
+router.post('/set-phone',auth(), userController.setUserPhone)
 // *!get all  user
 router.get("/", userController.getUsers);
 router.get("/get-random-user", userController.getRandomUser);
@@ -21,7 +22,7 @@ router.get("/get-user-home",auth(), userController.getUserForHomePage);
 router.post('/check-email',validateRequest(UserValidation.checkEmailSchema), userController.checkEmail)
 router.post('/check-username', userController.checkUsername)
 router.get("/:id", userController.getSingleUserById);
-router.put("/:id", userController.updateUser);
+router.put("/:id",validateRequest(UserValidation.userUpdateSchema), userController.updateUser);
 
 
 

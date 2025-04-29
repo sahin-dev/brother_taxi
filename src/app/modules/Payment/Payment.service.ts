@@ -14,7 +14,7 @@ import config from '../../../config';
 
 
 const stripe = require('stripe')(
-
+config.stripe_key
 );
 
 export interface IBuySubscription {
@@ -187,6 +187,7 @@ const buySubscription = async (payload: IBuySubscription, user: JwtPayload) => {
     if (!customerId) {
       const customer = await stripe.customers.create({
         email: existingUser.email,
+        
       });
       customerId = customer.id;
 
@@ -259,9 +260,9 @@ const buySubscription = async (payload: IBuySubscription, user: JwtPayload) => {
         invoice_pdf: subscription?.latest_invoice?.invoice_pdf,
       };
 
-      // const paymentInfo = await tx.paymentInfo.create({
-      //   data: returnData,
-      // });
+      const paymentInfo = await tx.paymentInfo.create({
+        data: returnData,
+      });
 
       return returnData;
     });

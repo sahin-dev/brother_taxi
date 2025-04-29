@@ -1,4 +1,4 @@
-import express from "express";
+import express, {Request, Response} from "express";
 import validateRequest from "../../middlewares/validation.middleware";
 import { AuthController } from "./auth.controller";
 // import { UserValidation } from "../User/user.validation";
@@ -6,6 +6,8 @@ import auth from "../../middlewares/auth.middleware";
 // import {UserRole} from '@prisma/client'
 import { UserLoginValidationSchema, changePasswordValidationSchema, changePhoneNumberSchema, loginAttemptSchema, verifyOtpSchema, verifyPhoneSchema } from "./auth.validation";
 
+import '../../../helpers/passport'
+import passport from 'passport'
 
 const router = express.Router();
 
@@ -33,6 +35,14 @@ router.get(
   auth(),
   AuthController.getMyProfile
 );
+//sign in using google
+router.get('/google', passport.authenticate("google",{
+  scope:["email", "profile"]
+}))
+
+router.get('/google/callback', passport.authenticate('google', {failureRedirect:"login"}), (req:Request, res:Response)=>{
+res.send(req.user)
+})
 
 // router.put(
 //   "/change-password",

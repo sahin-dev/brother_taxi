@@ -28,3 +28,12 @@ export type IUserFilterRequest = {
 export interface IUpdateGenderVisibility {
   id:string
 }
+
+export interface IUserUpdate {
+  email?:string,
+  firstName?:string,
+  lastName?:string,
+  phone?:string,
+  role?:string,
+  isDeleted?:boolean
+}

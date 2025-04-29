@@ -4,7 +4,7 @@ import sendResponse from "../../../shared/ApiResponse";
 import { notificationServices } from "./Notification.service";
 
 
-const sendNotification = catchAsync(async (req: any, res: any) => {
+const sendNotification = catchAsync(async (req: Request, res: Response) => {
   const notification = await notificationServices.sendSingleNotification(req);
 
   sendResponse(res, {
@@ -15,7 +15,7 @@ const sendNotification = catchAsync(async (req: any, res: any) => {
   });
 });
 
-const sendNotifications = catchAsync(async (req: any, res: any) => {
+const sendNotifications = catchAsync(async (req: Request, res: Response) => {
   const notifications = await notificationServices.sendNotifications(req);
 
   sendResponse(res, {
@@ -26,7 +26,7 @@ const sendNotifications = catchAsync(async (req: any, res: any) => {
   });
 });
 
-const getNotifications = catchAsync(async (req: any, res: any) => {
+const getNotifications = catchAsync(async (req: Request, res: Response) => {
   const notifications = await notificationServices.getNotificationsFromDB(req);
 
   sendResponse(res, {
@@ -37,7 +37,7 @@ const getNotifications = catchAsync(async (req: any, res: any) => {
   });
 });
 
-const getSingleNotificationById = catchAsync(async (req: any, res: any) => {
+const getSingleNotificationById = catchAsync(async (req: Request, res: Response) => {
   const notificationId = req.params.notificationId;
   const notification = await notificationServices.getSingleNotificationFromDB(
     req,
@@ -56,7 +56,7 @@ const getSingleNotificationById = catchAsync(async (req: any, res: any) => {
 const readNotification = catchAsync(async (req:Request, res:Response)=>{
   const notificationId = req.params.notificationId
   const userId = req.user.id
-  const result = await notificationServices.readNotification(userId,notificationId)
+  const result = await notificationServices.readNotification(userId!,notificationId)
 
   sendResponse(res, {
     success: true,

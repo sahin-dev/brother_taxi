@@ -3,20 +3,31 @@ import express, { Application, NextFunction, Request, Response } from "express";
 import httpStatus from "http-status";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import session from 'express-session'
+import passport from 'passport'
+
 import router from "./app/routes";
 import ErrorHandler from "./app/middlewares/error.middleware";
 import { User } from "@prisma/client";
 
+
 const app: Application = express();
 
+app.use(session({
+  secret:"secret123#ABC",
+  resave:false,
+  saveUninitialized:false
+}))
 
-declare global {
-  namespace Express {
-    interface Request {
-      user: User;
-    }
+app.use(passport.initialize())
+app.use(passport.session())
+
+declare module "express-serve-static-core" {
+  interface Request {
+    user: User;
   }
 }
+
 
 
 
