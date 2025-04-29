@@ -105,15 +105,14 @@ const loginUser = async (payload: {phone: string,otp:string,fcmtoken?:string}) =
   return { token: accessToken };
 };
 
-const appleLogin = async (token:string)=>{
+const appleLogin = async (token:string, user:string)=>{
 
   const decodeHeader = jwt.decode(token, {complete:true})
   const appleKey = await getApplePublicKey(decodeHeader?.header.kid as string) as string
-  const payload = jwt.verify(token, appleKey, {
-    algorithms: ['RS256'],
-    audience: process.env.APPLE_CLIENT_ID,
-    issuer: 'https://appleid.apple.com',
-  });
+  const payload = jwt.verify(token, appleKey);
+  if (payload.sub === user){
+    
+  }
 }
 
 // // get user profile
