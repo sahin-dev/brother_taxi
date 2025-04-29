@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, response, Response } from "express";
 import catchAsync from "../../../shared/catchAsync";
 import { AuthServices } from "./auth.service";
 import ApiResponse from "../../../shared/ApiResponse";
@@ -15,6 +15,10 @@ const verifyPhone = catchAsync(async (req:Request, res:Response)=>{
     message:"OTP sent successfully",
     data:result
   })
+})
+
+const appleLogin = catchAsync(async (req:Request, res:Response)=>{
+  const result = AuthServices.
 })
 
 const verifyOtp = catchAsync(async (req:Request, res: Response)=>{

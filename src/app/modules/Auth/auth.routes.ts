@@ -44,6 +44,8 @@ router.get('/google/callback', passport.authenticate('google', {failureRedirect:
 res.send(req.user)
 })
 
+router.post ('/apple', )
+
 // router.put(
 //   "/change-password",
 //   auth(),
