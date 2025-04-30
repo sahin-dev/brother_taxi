@@ -5,9 +5,10 @@ import app from "./app";
 import { setupWebSocket } from "./helpers/websocketSetUp";
 
 let server: Server;
+const PORT = config.port || 5000
 
 async function startServer() {
-  server = app.listen(config.port, () => {
+  server = app.listen(PORT, () => {
     console.log("Server is listiening on port ", config.port);
   });
   await setupWebSocket(server);
