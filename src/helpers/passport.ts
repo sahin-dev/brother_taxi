@@ -14,7 +14,7 @@ const AppleStrategy = passportApple.Strategy
 passport.use(new GoogleStartegy({
     clientID:config.google.client_id as string,
     clientSecret:config.google.client_secret as string,
-    callbackURL:"https://roady-eight.vercel.app/api/v1/auth/google/callback"
+    callbackURL:"https://roady-5qly.onrender.com/api/v1/auth/google/callback"
 
 },async (accessToken:any, refreshToken:any, profile:any, done:any) => {  
     // 🗂️ In a real app, you'd save the user info to your DB here  

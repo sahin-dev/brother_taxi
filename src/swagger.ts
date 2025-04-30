@@ -10,7 +10,7 @@ const options: swaggerJSDoc.Options = {
     },
     servers: [
       {
-        url: 'http://localhost:3000/api/v1',
+        url: 'hhttps://roady-5qly.onrender.com/api/v1',
       },
     ],
     components: {

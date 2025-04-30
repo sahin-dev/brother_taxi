@@ -11,7 +11,7 @@ servers:
 paths:
   /verify-phone:
     post:
-      summary: Send OTP to phone
+      summary: Send OTP to phone based on request. Different requests are login, signup with phone and change phone number
       requestBody:
         required: true
         content:

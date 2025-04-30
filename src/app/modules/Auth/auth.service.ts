@@ -240,11 +240,12 @@ const verifyPhoneNumber = async ({phone,requestType}:{phone:string, requestType:
     await prisma.user.create({data:{phone,otp,otpExpiresIn:otpExpiary}})
 
 
-    return {message:"Otp send successfully"}
+    return {message:"Otp sent successfully. Otp willbe valid for 15 minutes."}
   }
 }
 
 const verifyRequest  = async ({phone,otp,requestType, newPhone,fcmToken}:{phone:string, otp:string,requestType:RequestType,newPhone?:string,fcmToken?:string})=>{
+  
   const user = await prisma.user.findFirst({where:{phone}})
 
   if (!user){
