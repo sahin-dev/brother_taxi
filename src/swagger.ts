@@ -1,4 +1,6 @@
 import swaggerJSDoc from 'swagger-jsdoc';
+import { authDocs } from './app/modules/Auth/auth.swagger';
+
 
 const options: swaggerJSDoc.Options = {
   definition: {
@@ -11,9 +13,12 @@ const options: swaggerJSDoc.Options = {
     servers: [
       {
         url: 'https://roady-5qly.onrender.com/api/v1',
-      },
+      }
     ],
+    tags:[...authDocs.tags],
+    paths:{...authDocs.paths},
     components: {
+      ...authDocs.components,
       securitySchemes: {
         bearerAuth: {
           type: 'http',
