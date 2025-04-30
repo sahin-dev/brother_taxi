@@ -7,6 +7,10 @@
       }
     ],
     "routes": [
+        {
+            "src": "/api-docs(?:/.*)?",
+            "dest": "src/app.ts"
+          },
       {
         "src": "/(.*)",
         "dest": "src/app.ts"

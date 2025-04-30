@@ -9,7 +9,6 @@ import passport from 'passport'
 import router from "./app/routes";
 import ErrorHandler from "./app/middlewares/error.middleware";
 import { User } from "@prisma/client";
-import swagg from "swagger-jsdoc";
 import swaggerUi from 'swagger-ui-express'
 import swaggerSpec from "./swagger";
 
@@ -49,12 +48,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 // Route handler for root endpoint
-app.use('/api-docs',swaggerUi.serve, swaggerUi.setup(swaggerSpec))
+
 
 
 // Router setup
 app.use("/api/v1", router);
-
+app.use('/api-docs',swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 // Error handling middleware
 app.use(ErrorHandler);
 
