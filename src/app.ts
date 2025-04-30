@@ -45,7 +45,7 @@ app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static("public"));
+// app.use(express.static("public"));
 
 // Route handler for root endpoint
 
@@ -53,7 +53,10 @@ app.use(express.static("public"));
 
 // Router setup
 app.use("/api/v1", router);
-app.use('/api-docs',swaggerUi.serve, swaggerUi.setup(swaggerSpec))
+app.use('/api-docs', (req:Request,res:Response,next:NextFunction)=>{
+  console.log(req.url)
+  next()
+},swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 // Error handling middleware
 app.use(ErrorHandler);
 
