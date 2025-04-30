@@ -4,10 +4,13 @@
   "description": "Backend apifor  modile app named \"Roady\" developed using NodeJs and ExpressJs",
   "main": "server.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon ./src/server.ts",
+    "start": "node ./dist/server.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
-    "postinstall": "prisma generate"
+    "generate": "ts-node src/generate-module.js",
+    "postinstall": "prisma generate",
+    "test": "echo \"Error: no test specified\" && exit 1"
+
   },
   "repository": {
     "type": "git",
