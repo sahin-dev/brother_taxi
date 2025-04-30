@@ -31,7 +31,7 @@ declare module "express-serve-static-core" {
 }
 
 
-const CSS_URL = "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.1.0/swagger-ui.min.css";
+
 
 export const corsOptions = {
   origin: ["http://localhost:3001", "http://localhost:3000"],
@@ -53,10 +53,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Router setup
 app.use("/api/v1", router);
-app.use('/', (req:Request,res:Response,next:NextFunction)=>{
-  console.log(req.url)
-  next()
-},swaggerUi.serve, swaggerUi.setup(swaggerSpec, { customCssUrl: CSS_URL }))
+app.use('/api-docs',swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 // Error handling middleware
 app.use(ErrorHandler);
 
