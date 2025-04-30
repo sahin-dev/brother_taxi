@@ -4,7 +4,7 @@ import { AuthController } from "./auth.controller";
 // import { UserValidation } from "../User/user.validation";
 import auth from "../../middlewares/auth.middleware";
 // import {UserRole} from '@prisma/client'
-import { UserLoginValidationSchema, changePasswordValidationSchema, changePhoneNumberSchema, loginAttemptSchema, verifyRequestSchema, verifyPhoneSchema } from "./auth.validation";
+import { UserLoginValidationSchema, changePasswordValidationSchema, changePhoneNumberSchema, loginAttemptSchema, verifyRequestSchema, verifyPhoneSchema,verifyWithEmailSchema,verifyRequestWithEmailSchema } from "./auth.validation";
 
 import '../../../helpers/passport'
 import passport from 'passport'
@@ -14,6 +14,9 @@ const router = express.Router();
 
 router.post('/verify-phone', validateRequest(verifyPhoneSchema),AuthController.verifyPhone)
 router.post('/verify-request', validateRequest(verifyRequestSchema), AuthController.verifyRequest)
+// router.post('/verify-email', AuthController.verifyWithEmail)
+router.post('/verify-email', validateRequest(verifyWithEmailSchema), AuthController.verifyWithEmail)
+router.post('/verify-request-email', validateRequest(verifyRequestWithEmailSchema), AuthController.verifyRequestWithEmail)
 
 // router.post('/get-otp', )
 

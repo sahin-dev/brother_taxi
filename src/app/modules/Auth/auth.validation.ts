@@ -11,6 +11,19 @@ export const UserLoginValidationSchema = z.object({
  
   });
   
+export const verifyWithEmailSchema = z.object({
+    email: z.string().email("Email is required"),
+    requestType:z.nativeEnum(RequestType,{required_error:"Request type is required"}),
+}) 
+
+
+export const verifyRequestWithEmailSchema =  z.object({
+  email:z.string().email().nonempty("phone is required"),
+  otp:z.string().nonempty("otp is required"),
+  requestType:z.nativeEnum(RequestType,{required_error:"Request type is required"}),
+  newPhone:z.string({invalid_type_error:"phone is invalid"}).optional(),
+  fcmToken:z.string().optional()
+})
   
 export const changePasswordValidationSchema = z.object({
     oldPassword: z.string().min(8),

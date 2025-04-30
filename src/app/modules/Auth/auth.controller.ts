@@ -5,7 +5,29 @@ import ApiResponse from "../../../shared/ApiResponse";
 import httpStatus from "http-status";
 
 
+const verifyWithEmail = catchAsync(async (req:Request, res:Response)=>{
+  const {email, requestType} = req.body
 
+  const result = await AuthServices.verifyWithEmail(email,requestType)
+  ApiResponse(res,{
+    statusCode:httpStatus.OK,
+    success:true,
+    message:"OTP sent successfully",
+    data:result
+  })
+})
+
+const verifyRequestWithEmail = catchAsync(async (req:Request, res:Response)=>{  
+  const {email, otp, requestType, fcmToken} = req.body
+
+  const result = await AuthServices.verifyRequestWithEmail(email,otp,requestType,fcmToken)
+  ApiResponse(res,{
+    statusCode:httpStatus.OK,
+    success:true,
+    message:"OTP verified successfully",
+    data:result
+  })
+})
 
 const verifyPhone = catchAsync(async (req:Request, res:Response)=>{
   const result = await AuthServices.verifyPhoneNumber(req.body)
@@ -187,5 +209,7 @@ export const AuthController = {
 //   changePhone
     initiateLogin,
     appleLogin,
-    googleLogin
+    googleLogin,
+    verifyWithEmail,
+    verifyRequestWithEmail
 };
