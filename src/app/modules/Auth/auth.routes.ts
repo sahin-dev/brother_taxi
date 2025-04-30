@@ -4,7 +4,7 @@ import { AuthController } from "./auth.controller";
 // import { UserValidation } from "../User/user.validation";
 import auth from "../../middlewares/auth.middleware";
 // import {UserRole} from '@prisma/client'
-import { UserLoginValidationSchema, changePasswordValidationSchema, changePhoneNumberSchema, loginAttemptSchema, verifyOtpSchema, verifyPhoneSchema } from "./auth.validation";
+import { UserLoginValidationSchema, changePasswordValidationSchema, changePhoneNumberSchema, loginAttemptSchema, verifyRequestSchema, verifyPhoneSchema } from "./auth.validation";
 
 import '../../../helpers/passport'
 import passport from 'passport'
@@ -13,8 +13,9 @@ const router = express.Router();
 
 
 router.post('/verify-phone', validateRequest(verifyPhoneSchema),AuthController.verifyPhone)
-router.post('/verify-otp', validateRequest(verifyOtpSchema), AuthController.verifyOtp)
+router.post('/verify-request', validateRequest(verifyRequestSchema), AuthController.verifyRequest)
 
+// router.post('/get-otp', )
 
 //login-attempt
 router.post('/login-attempt', validateRequest(loginAttemptSchema) ,AuthController.initiateLogin)
@@ -36,15 +37,19 @@ router.get(
   AuthController.getMyProfile
 );
 //sign in using google
-router.get('/google', passport.authenticate("google",{
+router.get('/google-login', passport.authenticate("google",{
   scope:["email", "profile"]
 }))
+router.get('/apple-login', passport.authenticate('appleid'))
 
-router.get('/google/callback', passport.authenticate('google', {failureRedirect:"login"}), (req:Request, res:Response)=>{
-res.send(req.user)
-})
+router.get('/google/callback', passport.authenticate('google', {failureRedirect:"login"}), AuthController.googleLogin)
+// Apple redirect callback
+router.post('/auth/apple/callback',
+  passport.authenticate('appleid', { session: false }),
+  AuthController.appleLogin
+);
 
-router.post ('/apple', )
+// router.post ('/apple', )
 
 // router.put(
 //   "/change-password",
@@ -60,10 +65,10 @@ router.post ('/apple', )
 //   '/forgot-password',
 //   AuthController.forgotPassword
 // );
-// router.post(
-//   '/resend-otp',
-//   AuthController.resendOtp
-// );
+router.post(
+  '/resend-otp',
+  AuthController.resendOtp
+);
 // router.post(
 //   '/verify-otp',
 //   AuthController.verifyForgotPasswordOtp

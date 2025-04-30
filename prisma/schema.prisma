@@ -9,9 +9,9 @@ datasource db {
 
 model User {
   id                String         @id @default(auto()) @map("_id") @db.ObjectId
-  email             String?         @unique
-  phone             String?         @unique
-  username          String?         @unique
+  email             String?         
+  phone             String?         
+  username          String?         
   dob               DateTime?
   residence_country String?
   firstName         String?
@@ -52,7 +52,8 @@ model User {
 
   favoritesFood String[]
   photos        Json?
-
+  appleId       String?     
+  googleId      String?    
 
   // expirationOtp     DateTime?
   isCompleteProfile Boolean        @default(false)

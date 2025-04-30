@@ -29,14 +29,49 @@ const UserLoginValidationSchema = z.object({
     .nonempty("Password is required"),
 });
 
+// id                String         @id @default(auto()) @map("_id") @db.ObjectId
+//   email             String?         
+//   phone             String?         @unique
+//   username          String?         
+//   dob               DateTime?
+//   residence_country String?
+//   firstName         String?
+//   lastName          String?
+//   about             String?
+//   interests         InterestType[]
+//            Int?
+//   budgbudgetMinetMax         Int?
+//   travelPartner     TravelPartner?
+//   deleted           Boolean @default(false)
+
+//   gender            GenderDescription?
+//   genderVisibility  Boolean?        @default(false)
+//   tripType          TripType?
+//   tripDuration      TripDuration?
+//   tripContinent  String?
+//   tripCountry String?
+//   interestAgeGroup  AgeGroup?
+//   otp            String?
+//   otpExpiresIn   DateTime?
+
 const userUpdateSchema = z.object({
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
-  dob: z.string().optional(),
-  interests: z.array(z.nativeEnum(InterestType)).optional(),
-  username:z.string().optional(),
   email:z.string().email().optional(),
-  phone:z.string().optional()
+  username: z.string().optional(),
+  firstName:z.string().optional(),
+  lastName:z.string().optional(),
+  dob:z.string({required_error:"Date of birth is required"}).optional(),
+  residence_country:z.string().nonempty("country is required").optional(),
+  gender: z.object({label:z.string().nonempty("Label is required"), sub_categories:z.array(z.nativeEnum(GenderSubCategory)).optional()}).optional(),
+  tripType:z.nativeEnum(TripType).optional(),
+  tripDuration:z.nativeEnum(TripDuration).optional(),
+  tripContinent:z.string().nonempty("Continent is required").optional(),
+  tripCountry:z.string().nonempty("Trip country is requred").optional(),
+  interestAgeGroup:z.string().nonempty("Age range is required").optional(),
+  interests:z.array(z.nativeEnum(InterestType)).optional(),
+  budgetMax:z.number({required_error:"budget max is required"}).optional(),
+  budgetMin:z.number({required_error:"Budget min is required"}).optional(),
+  about:z.string().nonempty("About must be provided").optional()
+
 });
 
 const checkEmailSchema = z.object({

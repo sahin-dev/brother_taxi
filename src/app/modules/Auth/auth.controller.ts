@@ -18,15 +18,27 @@ const verifyPhone = catchAsync(async (req:Request, res:Response)=>{
 })
 
 const appleLogin = catchAsync(async (req:Request, res:Response)=>{
-  const result = AuthServices.
+  
+  const result = await AuthServices.appleLogin(req.user)
 })
 
-const verifyOtp = catchAsync(async (req:Request, res: Response)=>{
-  const result = await AuthServices.verifyOtp(req.body)
+const googleLogin = catchAsync(async (req:Request, res:Response)=>{
+  const result = await AuthServices.googleLogin(req.user)
   ApiResponse(res, {
     statusCode:httpStatus.OK,
     success:true,
-    message:"Otp verified successfully",
+    message:"User is authenticated",
+    data:result
+  })
+})
+
+const verifyRequest = catchAsync(async (req:Request, res: Response)=>{
+  const result = await AuthServices.verifyRequest(req.body)
+
+  ApiResponse(res, {
+    statusCode:httpStatus.OK,
+    success:true,
+    message:"Request verified successfully",
     data:result
   })
 })
@@ -115,17 +127,17 @@ const getMyProfile = catchAsync(async (req: Request, res: Response) => {
 //       data: result
 //   })
 // });
-// const resendOtp = catchAsync(async (req: Request, res: Response) => {
+const resendOtp = catchAsync(async (req: Request, res: Response) => {
 
-//   const result= await AuthServices.resendOtp(req.body.email);
+  const result= await AuthServices.resendOtp(req.body.email);
 
-//   ApiResponse(res, {
-//       statusCode: httpStatus.OK,
-//       success: true,
-//       message: "Check your email!",
-//       data: result
-//   })
-// });
+  ApiResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Check your email!",
+      data: result
+  })
+});
 // const verifyForgotPasswordOtp = catchAsync(async (req: Request, res: Response) => {
 
 //   const result= await AuthServices.verifyForgotPasswordOtp(req.body);
@@ -166,12 +178,14 @@ export const AuthController = {
   logoutUser,
   getMyProfile,
   verifyPhone, 
-  verifyOtp,
+  verifyRequest,
 //   changePassword,
 //   forgotPassword,
 //   resetPassword,
-//   resendOtp,
+  resendOtp,
 //   verifyForgotPasswordOtp,
 //   changePhone
-    initiateLogin
+    initiateLogin,
+    appleLogin,
+    googleLogin
 };

@@ -1,4 +1,4 @@
-import { RequestType, User } from "@prisma/client";
+import { RequestType, User, UserStatus } from "@prisma/client";
 
 import * as bcrypt from "bcrypt";
 import crypto from "crypto";
@@ -12,7 +12,7 @@ import prisma from "../../db/client";
 import { generateOtp } from "../../../helpers/generateOtp";
 import jwt from "jsonwebtoken";
 import { getApplePublicKey } from "../../../helpers/applePublicKey";
-// import redis from "../../../config/redis";
+
 
 
 
@@ -21,32 +21,63 @@ const initiateLogin = async (payload: {phone:string})=>{
   //Send this otp to user through email or phone whatever client prefer.
   //save to database
   
-    const user = await prisma.user.findUnique({where:{phone:payload.phone}})
+    const user = await prisma.user.findFirst({where:{phone:payload.phone}})
     if(!user){
       throw new ApiError(httpStatus.NOT_FOUND, "User not found!")
     }
     const otp =  generateOtp()
     const expirationDate = new Date(Date.now() + 5 *60*1000)
+
+    //   // Create email content
+  const html = `
+    <div style="font-family: Arial, sans-serif; color: #333; padding: 30px; background: linear-gradient(135deg, #6c63ff, #3f51b5); border-radius: 8px;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 30px; border-radius: 8px;">
+            <h2 style="color: #ffffff; font-size: 28px; text-align: center; margin-bottom: 20px;">
+                <span style="color: #ffeb3b;">Resend OTP</span>
+            </h2>
+            <p style="font-size: 16px; color: #333; line-height: 1.5; text-align: center;">
+                Here is your new OTP code to complete the process.
+            </p>
+            <p style="font-size: 32px; font-weight: bold; color: #ff4081; text-align: center; margin: 20px 0;">
+                ${otp}
+            </p>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <p style="font-size: 14px; color: #555; margin-bottom: 10px;">
+                    This OTP will expire in <strong>5 minutes</strong>. If you did not request this, please ignore this email.
+                </p>
+                <p style="font-size: 14px; color: #555; margin-bottom: 10px;">
+                    If you need further assistance, feel free to contact us.
+                </p>
+            </div>
+            <div style="text-align: center; margin-top: 30px;">
+                <p style="font-size: 12px; color: #999; text-align: center;">
+                    Best Regards,<br/>
+                    <span style="font-weight: bold; color: #3f51b5;">levimusuc@team.com</span><br/>
+                    <a href="mailto:support@booksy.buzz.com" style="color: #ffffff; text-decoration: none; font-weight: bold;">Contact Support</a>
+                </p>
+            </div>
+        </div>
+    </div>
+  `;
+
+  // Send the OTP to user's email
+  if (user.email)
+    await emailSender(user.email, html, "Resend OTP");
    
     await prisma.user.update({where:{id:user.id}, data:{otp,otpExpiresIn:expirationDate}})
     
-    // await redis.setex(payload.phone,300,otp)
+    
     return {message:  "Otp generated successfully"}
 
-  // const loginOtp = await prisma.loginOtp.findUnique({where:{phone:payload.phone}})
-  // if (! loginOtp){
-  //     throw new ApiError(httpStatus.NOT_FOUND, "Otp creation failed!")
-  // }
-  
-
-  // return {messaage:"Otp created successfully"}
 }
 
 
 // user login
+//check otp
+//inavalidate otp
 const loginUser = async (payload: {phone: string,otp:string,fcmtoken?:string}) => {
   
-  const user = await prisma.user.findUnique({where:{phone:payload.phone}})
+  const user = await prisma.user.findFirst({where:{phone:payload.phone}})
 
   if(!user){
     throw new ApiError(httpStatus.NOT_FOUND, "User not found!")
@@ -60,30 +91,12 @@ const loginUser = async (payload: {phone: string,otp:string,fcmtoken?:string}) =
   }
 
  
-  if ( (!user.otpExpiresIn || new Date(user.otpExpiresIn) < new Date())){
+  if ( (!user.otpExpiresIn || user.otpExpiresIn < new Date())){
     throw new ApiError(httpStatus.BAD_REQUEST, "Otp is invalid")
   }
-  // const userData = await prisma.user.findUnique({
-  //   where: {
-  //     phone: payload.phone,
-  //   },
-  // });
+  
 
-  // if (!userData) {
-  //   throw new ApiError(
-  //     httpStatus.NOT_FOUND,
-  //     "User not found! with this phone " + payload.phone
-  //   );
-  // }
-// await prisma.otp.update({where:{phone:payload.phone}, data:{otp:""}})
-//   const isCorrectPassword: boolean = await bcrypt.compare(
-//     payload.password,
-//     userData.password
-//   );
-
-//   if (!isCorrectPassword) {
-//     throw new ApiError(httpStatus.BAD_REQUEST, "Password incorrect!");
-//   }
+  await prisma.user.update({where:{id:user.id},data:{otp:"", otpExpiresIn:""}})
 
   if (payload && payload.fcmtoken) {
     await prisma.user.update({
@@ -105,14 +118,37 @@ const loginUser = async (payload: {phone: string,otp:string,fcmtoken?:string}) =
   return { token: accessToken };
 };
 
-const appleLogin = async (token:string, user:string)=>{
 
-  const decodeHeader = jwt.decode(token, {complete:true})
-  const appleKey = await getApplePublicKey(decodeHeader?.header.kid as string) as string
-  const payload = jwt.verify(token, appleKey);
-  if (payload.sub === user){
+const googleLogin = async (googleProfile:any)=>{
+  const id = googleProfile.id as string
+  let user = await prisma.user.findFirst({where:{googleId:googleProfile.id}})
+  console.log(id)
+  if (!user){
     
+    user =  await prisma.user.create({data:{googleId:id,username:googleProfile.displayName, firstName:googleProfile.name?.givenName,lastName:googleProfile.name?.familyName,email:googleProfile.emails[0].value}})
   }
+
+  const accessToken = generateToken(
+    {
+      id: user.id,
+      phone: user.phone,
+      role:user.role
+    },
+    config.jwt.jwt_secret as Secret,
+    config.jwt.expires_in as string
+  );
+
+  return {token:accessToken}
+}
+
+const appleLogin = async (appleProfile:any)=>{
+
+  // const decodeHeader = jwt.decode(token, {complete:true})
+  // const appleKey = await getApplePublicKey(decodeHeader?.header.kid as string) as string
+  // const payload = jwt.verify(token, appleKey);
+  // if (payload.sub === user){
+    
+  // }
 }
 
 // // get user profile
@@ -163,91 +199,104 @@ const getMyProfile = async (userToken: string) => {
 
 const verifyPhoneNumber = async ({phone,requestType}:{phone:string, requestType:string})=>{
 
-//   if (requestType === RequestType.LOGIN){
-//     const user = await prisma.user.findUnique({where:{phone}})
-//     if (!user){
-//       throw new ApiError(httpStatus.NOT_FOUND, "User not found!")
-//     }
-//     const otp = generateOtp()
-//     const otpExpiary = new Date(Date.now() + 5 * 60 * 1000)
-//     const ExistingOtp = await prisma.otp.findUnique({where:{phone}})
-//     if (!ExistingOtp){
-//       await prisma.otp.create({data:{otp,expiresIn:otpExpiary,phone}})
-//     }else{
-//       await prisma.otp.update({where:{id:ExistingOtp.id},data:{otp,expiresIn:otpExpiary,phone}})
-//     }
-//     return {message:"Otp send successfully"}
+  if (requestType === RequestType.LOGIN){
+    const user = await prisma.user.findFirst({where:{phone}})
+    if (!user){
+      throw new ApiError(httpStatus.NOT_FOUND, "User not found!")
+    }
+    const otp = generateOtp()
+    const otpExpiary = new Date(Date.now() + 5 * 60 * 1000)
 
-//   }else if (requestType === RequestType.CHANGE_PHONE){
-//     const user = await prisma.user.findUnique({where:{phone}})
-//     if (!user){
-//       throw new ApiError(httpStatus.NOT_FOUND, "User not found")
-//     }
+    await prisma.user.update({where:{id:user.id},data:{otp,otpExpiresIn:otpExpiary}})
+   
+    return {message:"Otp send successfully"}
 
-//     const otp = generateOtp()
-//     const otpExpiary = new Date(Date.now() + 5 * 60 * 1000)
-//     const ExistingOtp = await prisma.otp.findUnique({where:{phone}})
+  }else if (requestType === RequestType.CHANGE_PHONE){
+    const user = await prisma.user.findFirst({where:{phone}})
+    if (!user){
+      throw new ApiError(httpStatus.NOT_FOUND, "User not found")
+    }
 
-//     if (!ExistingOtp){
-
-//       await prisma.otp.create({data:{otp,expiresIn:otpExpiary,phone}})
-      
-//     }else{
-
-//       await prisma.otp.update({where:{id:ExistingOtp.id},data:{otp,expiresIn:otpExpiary,phone}})
-
-//     }
-
-//     return {message:"Otp send successfully"}
-
-//   }else if (requestType === RequestType.SIGNUP){
-
-//     const userPresent = await checkUserExistence(phone)
-
-//     if (userPresent){
-
-//       throw new ApiError(httpStatus.BAD_REQUEST, `User with this phone ${phone} already exist.`)
-//     }
-
-//     const otp = generateOtp()
-//     const otpExpiary = new Date(Date.now() + 15 * 60 * 1000)
+    const otp = generateOtp()
+    const otpExpiary = new Date(Date.now() + 5 * 60 * 1000)
+    await prisma.user.update({where:{id:user.id},data:{otp,otpExpiresIn:otpExpiary}})
 
     
-//     const ExistingOtp = await prisma.otp.findUnique({where:{phone}})
+    return {message:"Otp send successfully"}
 
-//     if (!ExistingOtp){
+  }else if (requestType === RequestType.SIGNUP){
 
-//       await prisma.otp.create({data:{otp,expiresIn:otpExpiary,phone}})
-      
-//     }else{
+    const userPresent = await checkUserExistence(phone)
 
-//       await prisma.otp.update({where:{id:ExistingOtp.id},data:{otp,expiresIn:otpExpiary,phone}})
+    if (userPresent){
 
-//     }
+      throw new ApiError(httpStatus.BAD_REQUEST, `User with this phone ${phone} already exist.`)
+    }
 
-//     return {message:"Otp send successfully"}
-//   }
-// }
+    const otp = generateOtp()
+    const otpExpiary = new Date(Date.now() + 15 * 60 * 1000)
+
+    
+    await prisma.user.create({data:{phone,otp,otpExpiresIn:otpExpiary}})
+
+
+    return {message:"Otp send successfully"}
+  }
 }
-const verifyOtp  = async ({phone,otp}:{phone:string, otp:string})=>{
-  const user = await prisma.user.findUnique({where:{phone}})
+
+const verifyRequest  = async ({phone,otp,requestType, newPhone,fcmToken}:{phone:string, otp:string,requestType:RequestType,newPhone?:string,fcmToken?:string})=>{
+  const user = await prisma.user.findFirst({where:{phone}})
+
   if (!user){
     throw new ApiError(httpStatus.NOT_FOUND, "User not found")
   }
   if(!user.otp){
-    throw new ApiError(httpStatus.NOT_FOUND, "Otp not found")
+    throw new ApiError(httpStatus.NOT_FOUND, "Otp is not present")
   }
  
   if (user.otp !== otp || !user.otpExpiresIn || user.otpExpiresIn < new Date()){
     throw new ApiError (httpStatus.BAD_REQUEST, "Otp is invalid")
   }
-  await prisma.user.update({where:{phone}, data:{otp:null, otpExpiresIn:null}})
+  await prisma.user.update({where:{id:user.id}, data:{otp:null, otpExpiresIn:null}})
+  let result;
+  if (requestType === RequestType.LOGIN){
+
+    if (fcmToken) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { fcmToken:fcmToken },
+      });
+    }
   
-  return {message:"Otp verified successfully."}
+    const accessToken = generateToken(
+      {
+        id: user.id,
+        phone: user.phone,
+        role:user.role
+      },
+      config.jwt.jwt_secret as Secret,
+      config.jwt.expires_in as string
+    );
+  
+    result =  { token: accessToken };
+  
+
+  }else if(requestType === RequestType.SIGNUP) {
+
+    await prisma.user.update({where:{id:user.id}, data:{status:UserStatus.ACTIVE}})
+    result =  {message:"User account active"}
+
+  }else if (requestType === RequestType.CHANGE_PHONE){
+
+    await prisma.user.update({where:{id:user.id}, data:{phone:newPhone}})
+    result = {message:"Phone number change successfully."}
+
+  }
+  return result
 }
 
 const checkUserExistence = async (phone:string)=>{
-  const user = await prisma.user.findUnique({where:{phone}})
+  const user = await prisma.user.findFirst({where:{phone}})
   if (user){
     return true
   }
@@ -393,68 +442,69 @@ const verifyChangePhoneNumberOtp = async (token:string, otp:string, newPhone:str
 //   return { message: "Reset password OTP sent to your email successfully" };
 // };
 
-// const resendOtp = async (email: string) => {
-//   // Check if the user exists
-//   const user = await prisma.user.findUnique({
-//     where: { email: email },
-//   });
+const resendOtp = async (phone: string) => {
+  // Check if the user exists
+  const user = await prisma.user.findFirst({
+    where: { phone },
+  });
 
-//   if (!user) {
-//     throw new ApiError(httpStatus.NOT_FOUND, "This user is not found!");
-//   }
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "This user is not found!");
+  }
 
-//   // Generate a new OTP
-//   const otp = Number(crypto.randomInt(1000, 9999));
+  // Generate a new OTP
+  const otp = generateOtp()
 
-//   // Set OTP expiration time to 5 minutes from now
-//   const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
+  // Set OTP expiration time to 5 minutes from now
+  const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
 
-//   // Create email content
-//   const html = `
-//     <div style="font-family: Arial, sans-serif; color: #333; padding: 30px; background: linear-gradient(135deg, #6c63ff, #3f51b5); border-radius: 8px;">
-//         <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 30px; border-radius: 8px;">
-//             <h2 style="color: #ffffff; font-size: 28px; text-align: center; margin-bottom: 20px;">
-//                 <span style="color: #ffeb3b;">Resend OTP</span>
-//             </h2>
-//             <p style="font-size: 16px; color: #333; line-height: 1.5; text-align: center;">
-//                 Here is your new OTP code to complete the process.
-//             </p>
-//             <p style="font-size: 32px; font-weight: bold; color: #ff4081; text-align: center; margin: 20px 0;">
-//                 ${otp}
-//             </p>
-//             <div style="text-align: center; margin-bottom: 20px;">
-//                 <p style="font-size: 14px; color: #555; margin-bottom: 10px;">
-//                     This OTP will expire in <strong>5 minutes</strong>. If you did not request this, please ignore this email.
-//                 </p>
-//                 <p style="font-size: 14px; color: #555; margin-bottom: 10px;">
-//                     If you need further assistance, feel free to contact us.
-//                 </p>
-//             </div>
-//             <div style="text-align: center; margin-top: 30px;">
-//                 <p style="font-size: 12px; color: #999; text-align: center;">
-//                     Best Regards,<br/>
-//                     <span style="font-weight: bold; color: #3f51b5;">levimusuc@team.com</span><br/>
-//                     <a href="mailto:support@booksy.buzz.com" style="color: #ffffff; text-decoration: none; font-weight: bold;">Contact Support</a>
-//                 </p>
-//             </div>
-//         </div>
-//     </div>
-//   `;
+  // Create email content
+  const html = `
+    <div style="font-family: Arial, sans-serif; color: #333; padding: 30px; background: linear-gradient(135deg, #6c63ff, #3f51b5); border-radius: 8px;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 30px; border-radius: 8px;">
+            <h2 style="color: #ffffff; font-size: 28px; text-align: center; margin-bottom: 20px;">
+                <span style="color: #ffeb3b;">Resend OTP</span>
+            </h2>
+            <p style="font-size: 16px; color: #333; line-height: 1.5; text-align: center;">
+                Here is your new OTP code to complete the process.
+            </p>
+            <p style="font-size: 32px; font-weight: bold; color: #ff4081; text-align: center; margin: 20px 0;">
+                ${otp}
+            </p>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <p style="font-size: 14px; color: #555; margin-bottom: 10px;">
+                    This OTP will expire in <strong>5 minutes</strong>. If you did not request this, please ignore this email.
+                </p>
+                <p style="font-size: 14px; color: #555; margin-bottom: 10px;">
+                    If you need further assistance, feel free to contact us.
+                </p>
+            </div>
+            <div style="text-align: center; margin-top: 30px;">
+                <p style="font-size: 12px; color: #999; text-align: center;">
+                    Best Regards,<br/>
+                    <span style="font-weight: bold; color: #3f51b5;">levimusuc@team.com</span><br/>
+                    <a href="mailto:support@booksy.buzz.com" style="color: #ffffff; text-decoration: none; font-weight: bold;">Contact Support</a>
+                </p>
+            </div>
+        </div>
+    </div>
+  `;
 
-//   // Send the OTP to user's email
-//   await emailSender(user.email, html, "Resend OTP");
+  // Send the OTP to user's email
+  if(user.email)
+    await emailSender(user.email, html, "Resend OTP");
 
-//   // Update the user's profile with the new OTP and expiration
-//   const updatedUser = await prisma.user.update({
-//     where: { id: user.id },
-//     data: {
-//       otp: otp,
-//       expirationOtp: otpExpires,
-//     },
-//   });
+  // Update the user's profile with the new OTP and expiration
+  const updatedUser = await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      otp: otp,
+      otpExpiresIn: otpExpires,
+    },
+  });
 
-//   return { message: "OTP resent successfully" };
-// };
+  return { message: "OTP resent successfully" };
+};
 
 // const verifyForgotPasswordOtp = async (payload: {
 //   email: string;
@@ -559,11 +609,13 @@ export const AuthServices = {
   loginUser,
   getMyProfile,
   verifyPhoneNumber,
-  verifyOtp
+  verifyRequest,
+  appleLogin,
+  googleLogin,
 //   changePassword,
 //   forgotPassword,
 //   resetPassword,
-//   resendOtp,
+  resendOtp,
 //   verifyForgotPasswordOtp,
 //   verifyPhone,
 //   verifySignInOtp
