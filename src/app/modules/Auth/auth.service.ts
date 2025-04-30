@@ -298,7 +298,17 @@ const verifyRequestWithEmail = async (email:string, otp:string, requestType:Requ
   }else if(requestType === RequestType.SIGNUP) {
 
     await prisma.user.update({where:{id:user.id}, data:{status:UserStatus.ACTIVE}})
-    result =  {message:"User account active"}
+    
+    const accessToken = generateToken(
+      {
+        id: user.id,
+        phone: user.phone,
+        role:user.role
+      },
+      config.jwt.jwt_secret as Secret,
+      config.jwt.expires_in as string
+    );
+    result =  {message:"User account active",token:accessToken}
 
   }else if (requestType === RequestType.CHANGE_PHONE){
 
@@ -400,7 +410,17 @@ const verifyRequest  = async ({phone,otp,requestType, newPhone,fcmToken}:{phone:
   }else if(requestType === RequestType.SIGNUP) {
 
     await prisma.user.update({where:{id:user.id}, data:{status:UserStatus.ACTIVE}})
-    result =  {message:"User account active"}
+    
+    const accessToken = generateToken(
+      {
+        id: user.id,
+        phone: user.phone,
+        role:user.role
+      },
+      config.jwt.jwt_secret as Secret,
+      config.jwt.expires_in as string
+    );
+    result =  {message:"User account active", token:accessToken}
 
   }else if (requestType === RequestType.CHANGE_PHONE){
 
