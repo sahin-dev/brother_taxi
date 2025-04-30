@@ -9,6 +9,9 @@ import passport from 'passport'
 import router from "./app/routes";
 import ErrorHandler from "./app/middlewares/error.middleware";
 import { User } from "@prisma/client";
+import swagg from "swagger-jsdoc";
+import swaggerUi from 'swagger-ui-express'
+import swaggerSpec from "./swagger";
 
 
 const app: Application = express();
@@ -46,18 +49,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 // Route handler for root endpoint
-app.get("/", (req: Request, res: Response) => {
-  res.send({
-    success:true,
-    statusCode: httpStatus.OK,
-    message: "The server is running!",
-  });
-});
+app.use('/api-docs',swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 
-app.use('/', (req:Request, res:Response)=>{
-  res.setHeader("Content-Type", "text/html")
-  res.send("<h1>Api is working </h1>")
-})
+
 // Router setup
 app.use("/api/v1", router);
 
