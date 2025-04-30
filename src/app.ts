@@ -54,6 +54,10 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
+app.use('/', (req:Request, res:Response)=>{
+  res.setHeader("Content-Type", "text/html")
+  res.send("<h1>Api is working </h1>")
+})
 // Router setup
 app.use("/api/v1", router);
 
