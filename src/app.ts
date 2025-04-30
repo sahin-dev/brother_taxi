@@ -11,7 +11,7 @@ import ErrorHandler from "./app/middlewares/error.middleware";
 import { User } from "@prisma/client";
 import swaggerUi from 'swagger-ui-express'
 import swaggerSpec from "./swagger";
-
+import path from 'path'
 
 const app: Application = express();
 
@@ -53,7 +53,9 @@ app.use(express.static("public"));
 
 // Router setup
 app.use("/api/v1", router);
-app.use('/api-docs',swaggerUi.serve, swaggerUi.setup(swaggerSpec))
+app.use('/api-docs', express.static(path.join(__dirname, 'node_modules', 'swagger-ui-dist')));
+app.use('/api-docs',swaggerUi.serve)
+app.get('/api-docs', swaggerUi.setup(swaggerSpec))
 // Error handling middleware
 app.use(ErrorHandler);
 
