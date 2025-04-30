@@ -44,7 +44,7 @@ router.get('/apple-login', passport.authenticate('appleid'))
 
 router.get('/google/callback', passport.authenticate('google', {failureRedirect:"login"}), AuthController.googleLogin)
 // Apple redirect callback
-router.post('/auth/apple/callback',
+router.post('/apple/callback',
   passport.authenticate('appleid', { session: false }),
   AuthController.appleLogin
 );
