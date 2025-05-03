@@ -19,7 +19,7 @@ export const verifyWithEmailSchema = z.object({
 
 export const verifyRequestWithEmailSchema =  z.object({
   email:z.string().email().nonempty("phone is required"),
-  otp:z.string().nonempty("otp is required"),
+  otp:z.string().nonempty("otp is required").optional(),
   requestType:z.nativeEnum(RequestType,{required_error:"Request type is required"}),
   newPhone:z.string({invalid_type_error:"phone is invalid"}).optional(),
   fcmToken:z.string().optional()
