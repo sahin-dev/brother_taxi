@@ -1,4 +1,4 @@
-import { createServer,Server } from "https";
+import { createServer,Server } from "http";
 import config from "./config";
 import fs from "fs";
 import app from "./app";
@@ -15,8 +15,8 @@ const options = {
 
 
 async function startServer() {
-  server = createServer(options, app);
-  server.listen(PORT, () => {
+  // server = createServer(options, app);
+  server = app.listen(PORT, () => {
     console.log("Server is listiening on port ", config.port);
   });
   await setupWebSocket(server);
