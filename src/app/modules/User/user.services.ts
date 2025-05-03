@@ -1,4 +1,4 @@
-import { Prisma, User } from "@prisma/client";
+import { AgeGroup, Prisma, User } from "@prisma/client";
 import * as bcrypt from "bcrypt";
 import { Request } from "express";
 import httpStatus from "http-status";
@@ -12,34 +12,51 @@ import { generateOtpEmailHtml } from "../../../shared/html";
 import prisma from "../../../shared/prisma";
 import { userSearchAbleFields } from "./user.costant";
 import { IUpdateGenderVisibility, IUser, IUserFilterRequest,IUserUpdate } from "./user.interface";
-import { jwtHelpers } from "../../../helpers/jwt";
+import { jwtHelpers, verifyToken } from "../../../helpers/jwt";
 import { PassThrough } from "stream";
 import { calculateAge } from "../../../shared/calculateAge";
 import { generateOtp } from "../../../helpers/generateOtp";
+import { skip } from "@prisma/client/runtime/library";
 
 
-const setUserPhone  = async (id:any, {phone}:{phone:string})=>{
+const setUserPhone  = async (id:string)=>{
   const user = await prisma.user.findUnique({where:{id}})
   
   if(!user){
     throw new ApiError(httpStatus.NOT_FOUND, "User not found")
   }
-  if(user?.phone === phone){
-    throw new ApiError (httpStatus.BAD_REQUEST,"Phone is already exist")
+  if (user.phone){
+    throw new ApiError(httpStatus.BAD_REQUEST, "User already has a phone number")
   }
   
-
-
   const otp = generateOtp()
   const expiresIn = new Date(Date.now()+ 5 * 60 * 1000)
   await prisma.user.update({where:{id}, data:{otp, otpExpiresIn:expiresIn}})
+  const emailSubject = "Your OTP for Account Verification";
+  const emailHtml = generateOtpEmailHtml(user.email!, otp);
+  await emailSender(user.email!, emailHtml, emailSubject);
+  console.log(`OTP sent to ${user.email}`);
 
-  return {message:"Otp sent to your phone"}
+  return {message:"Otp sent to your email"}
 
 }
 
-const addPhone = async (otp:string, phone:string)=>{
-
+const verifySetPhone = async (id:string,otp:string, phone:string)=>{
+  const user = await prisma.user.findUnique({where:{id}})
+  if (!user){
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found")
+  }
+  if (user.phone){
+    throw new ApiError(httpStatus.BAD_REQUEST, "User already has a phone number")
+  }
+  if (user.otp !== otp){
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid OTP")
+  }
+  if (!user.otpExpiresIn || user.otpExpiresIn < new Date()){
+    throw new ApiError(httpStatus.BAD_REQUEST, "OTP expired")
+  }
+  await prisma.user.update({where:{id}, data:{phone, otp:null, otpExpiresIn:null}})
+  return {message:"Phone number updated successfully"}
 }
 
 const initiateSignUp = async (phone:string)=>{
@@ -77,48 +94,47 @@ const generateSignUpOtp = async ({phone}:{phone:string})=>{
 }
 
 // Create a new user in the database.
-const createUserIntoDb = async (payload:User) => {
-  const existingUser = await prisma.user.findFirst({
-    where: {
-      OR:[ {email:payload.email}, {username:payload.username}, {phone:payload.phone}]
-    },
-  });
+const createUserIntoDb = async (userId:string,payload:IUser) => {
+  const user = await prisma.user.findUnique({where:{id:userId}})
+  if (!user) { 
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found")
+   }
 
-  if (existingUser) {
-    if (existingUser.phone === payload.phone) {
-      throw new ApiError(
-        400,
-        `User with this phone ${payload.phone} already exists`
-      );
-    }else if (existingUser.email === payload.email){
-      throw new ApiError(
-        400,
-        `User with this email ${payload.email} already exists`
-      );
-    }else if (existingUser.username === payload.username){
-      throw new ApiError(
-        400,
-        `User with this username ${payload.username} already exists`
-      );
-    }
-  }
+  // if (existingUser) {
+  //   if (existingUser.phone === payload.phone) {
+  //     throw new ApiError(
+  //       400,
+  //       `User with this phone ${payload.phone} already exists`
+  //     );
+  //   }else if (existingUser.email === payload.email){
+  //     throw new ApiError(
+  //       400,
+  //       `User with this email ${payload.email} already exists`
+  //     );
+  //   }else if (existingUser.username === payload.username){
+  //     throw new ApiError(
+  //       400,
+  //       `User with this username ${payload.username} already exists`
+  //     );
+  //   }
+  // }
 
   // const hashedPassword = await bcrypt.hash(
   //   payload.password,
   //   Number(config.bcrypt_salt_rounds)
   // );
   // Generate OTP
-  const otp = generateOtp()
+  // const otp = generateOtp()
   // const otp = Math.floor(1000 + Math.random() * 9000); // 6-digit OTP
-  const otpExpiry = new Date(Date.now() + 15 * 60 * 1000); // OTP expires in 15 minutes
+  // const otpExpiry = new Date(Date.now() + 15 * 60 * 1000); // OTP expires in 15 minutes
 
   // Create the user and save the OTP and expiry in the database
+  const age  = calculateAge(payload.dob)
   const newUser = await prisma.user.create({
     data: {
      ...payload,
-     otp,
-     otpExpiresIn:otpExpiry,
-
+      age,
+      isCompleteProfile: true,
     },
     select: {
       id: true,
@@ -133,25 +149,25 @@ const createUserIntoDb = async (payload:User) => {
   });
 
   // Send the OTP to the user's email
-  try {
-    const emailSubject = "Your OTP for Account Verification";
+  // try {
+  //   const emailSubject = "Your OTP for Account Verification";
  
-    if (newUser.email){
-      const emailHtml = generateOtpEmailHtml(newUser.email, otp);
-      await emailSender(newUser.email!, emailHtml, emailSubject);
-      console.log(`OTP sent to ${newUser.email}`);
-    }else{
-      console.log("user email is not present")
-    }
+  //   if (newUser.email){
+  //     const emailHtml = generateOtpEmailHtml(newUser.email, otp);
+  //     await emailSender(newUser.email!, emailHtml, emailSubject);
+  //     console.log(`OTP sent to ${newUser.email}`);
+  //   }else{
+  //     console.log("user email is not present")
+  //   }
 
-  } catch (error) {
-    console.error(`Failed to send OTP email:`, error);
-  }
+  // } catch (error) {
+  //   console.error(`Failed to send OTP email:`, error);
+  // }
 
   return newUser;
 };
 
-const deleteAccount = async ({id}:{id:string})=>{
+const deleteAccount = async (id:string)=>{
   const user = await prisma.user.findUnique({where:{id}})
   if (!user){
     throw new ApiError(httpStatus.NOT_FOUND, "User not found")
@@ -163,8 +179,8 @@ const deleteAccount = async ({id}:{id:string})=>{
 
 
 
-const updateGenderVisibility = async (payload:IUpdateGenderVisibility)=>{
-  const user = await prisma.user.findUnique({where:{id:payload.id}})
+const updateGenderVisibility = async (id:string)=>{
+  const user = await prisma.user.findUnique({where:{id:id}})
   if (!user){
     throw new ApiError(httpStatus.NOT_FOUND, "User not found")
   }
@@ -668,6 +684,58 @@ const calculateDistance = (
   return EARTH_RADIUS * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
+
+// // get user profile
+const getMyProfile = async (id: string) => {
+  
+
+  const userProfile = await prisma.user.findUnique({
+    where: {
+      id: id,
+    },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      phone: true,
+      gender: true,
+      dob: true,
+      isPayment: true,
+      planName: true,
+      fcmToken: true,
+      priceId: true,
+      subscriptionId: true,
+      sexOrientation: true,
+      education: true,
+      interests: true,
+      distance: true,
+      favoritesFood: true,
+      photos: true,
+      genderVisibility:true,
+      residence_country:true,
+      travelPartner:true,
+      budgetMin:true,
+      budgetMax:true,
+      tripType:true,
+      tripDuration:true,
+      tripContinent:true,
+      tripCountry:true,
+      interestAgeGroup:true,
+      about: true,
+      lat: true,
+      long: true,
+      isCompleteProfile: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+  
+
+
+  return userProfile;
+};
+
+
 // get single user by id 
 const getSingleUserById = async (id:string) => {
   const user = await prisma.user.findUnique({
@@ -689,6 +757,7 @@ const getSingleUserById = async (id:string) => {
       lat: true,
       long: true,
       isCompleteProfile: true,
+      genderVisibility: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -697,8 +766,67 @@ const getSingleUserById = async (id:string) => {
 if(user?.dob){
    age= calculateAge(user.dob)
 }
+if (user?.genderVisibility === false) {
+  user.gender = null; // Hide
+}
 
   return { ...user, age };
+}
+
+
+
+
+const getMatchingUsres = async (userId:string, page:number = 1, limit:number = 10) => {
+  const targetUser = await prisma.user.findUnique({where:{id:userId}})
+  if (!targetUser){
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found")
+  } 
+  const offset = (page - 1) * limit;
+  const ageGroup = targetUser.interestAgeGroup
+  let ageMin, ageMax
+  if (ageGroup == AgeGroup.EIGHTEEN_TO_TWENTYFIVE){
+    ageMin = 18
+    ageMax = 25
+  }else if (ageGroup == AgeGroup.TWENTYFIVE_TO_THIRTYFIVE){
+    ageMin = 25
+    ageMax = 35
+  }else if (ageGroup == AgeGroup.FOURTYFIVE_TO_SIXTY){
+    ageMin = 45
+    ageMax = 60
+  }else if (ageGroup == AgeGroup.SIXY_TO_MORE){   
+    ageMin = 60
+    ageMax = 100 
+  }
+
+
+
+  const users = await prisma.user.findMany({
+    where:{
+      AND:[
+        {id:{not:userId}},
+        {residence_country:{equals:targetUser.residence_country}},
+        {age:{gte:ageMin, lte:ageMax}},
+        {interests:{hasSome:targetUser.interests}}
+      ]
+
+},
+skip:offset,
+take:limit,}
+)
+const filteredUsers = users.map((user) => {
+  if (user.gender?.label !== targetUser.gender?.label) {
+    if (user.genderVisibility === false) {
+      user.gender = null; 
+      return user; //
+  }
+}
+  return null
+})
+  
+const totalPages = Math.ceil(filteredUsers.length / limit)
+return {data:filteredUsers, pagination:{page, limit, totalPages}}
+
+
 }
 export const userService = {
   createUserIntoDb,
@@ -711,5 +839,9 @@ export const userService = {
   checkEmail,
   checkUsername,
   updateGenderVisibility,
-  setUserPhone
+  setUserPhone,
+  deleteAccount,
+  verifySetPhone,
+  getMatchingUsres,
+  getMyProfile
 };

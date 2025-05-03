@@ -97,7 +97,7 @@ const uploadToDigitalOcean = async (file: Express.Multer.File) => {
   }
 
   try {
-    const Key = `nathancloud/${Date.now()}_${uuidv4()}_${file.originalname}`;
+    const Key = `roady/${Date.now()}_${uuidv4()}_${file.originalname}`;
     const uploadParams = {
       Bucket: process.env.DO_SPACE_BUCKET || "",
       Key,
@@ -108,6 +108,7 @@ const uploadToDigitalOcean = async (file: Express.Multer.File) => {
 
     // Upload file to DigitalOcean Spaces
     await s3Client.send(new PutObjectCommand(uploadParams));
+  
 
     // Format the URL
     const fileURL = `${process.env.DO_SPACE_ENDPOINT}/${process.env.DO_SPACE_BUCKET}/${Key}`;

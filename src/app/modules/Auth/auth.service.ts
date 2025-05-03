@@ -165,7 +165,6 @@ const getMyProfile = async (userToken: string) => {
     select: {
       id: true,
       email: true,
-      name: true,
       phone: true,
       gender: true,
       dob: true,
@@ -174,21 +173,17 @@ const getMyProfile = async (userToken: string) => {
       fcmToken: true,
       priceId: true,
       subscriptionId: true,
-      sexOrientation: true,
-      education: true,
       interests: true,
       distance: true,
-      favoritesFood: true,
       photos: true,
-   
       about: true,
-      lat: true,
-      long: true,
       isCompleteProfile: true,
       createdAt: true,
       updatedAt: true,
     },
   });
+  
+
 
   return userProfile;
 };
@@ -340,7 +335,7 @@ const verifyPhoneNumber = async ({phone,requestType}:{phone:string, requestType:
     if (!user){
       throw new ApiError(httpStatus.NOT_FOUND, "User not found")
     }
-
+    
     const otp = generateOtp()
     const otpExpiary = new Date(Date.now() + 5 * 60 * 1000)
     await prisma.user.update({where:{id:user.id},data:{otp,otpExpiresIn:otpExpiary}})

@@ -11,18 +11,23 @@ const router = express.Router();
 // *!register user
 router.post(
   "/register",
-  validateRequest(UserValidation.CreateUserValidationSchema),
+  auth(),validateRequest(UserValidation.CreateUserValidationSchema),
   userController.createUser
 );
+router.get("/me", auth(), userController.getMyProfile);
+router.post("/update-gender-visibility",auth(UserRole.USER), userController.updateGenderVisibility);
 router.post('/set-phone',auth(), userController.setUserPhone)
+router.post('/verify-set-phone',auth(), userController.verifySetUserPhone)
 // *!get all  user
 router.get("/", userController.getUsers);
 router.get("/get-random-user", userController.getRandomUser);
 router.get("/get-user-home",auth(), userController.getUserForHomePage);
 router.post('/check-email',validateRequest(UserValidation.checkEmailSchema), userController.checkEmail)
+router.get("/match-user",auth(), userController.getMatchingUsers);
 router.post('/check-username', userController.checkUsername)
 router.get("/:id", userController.getSingleUserById);
 router.put("/:id",validateRequest(UserValidation.userUpdateSchema), userController.updateUser);
+router.delete("/",auth(), userController.deleteUser);
 
 
 

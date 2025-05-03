@@ -13,6 +13,7 @@ model User {
   phone             String?         
   username          String?         
   dob               DateTime?
+  age              Int?
   residence_country String?
   firstName         String?
   lastName          String?
@@ -156,14 +157,19 @@ model Trip{
   id          String @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   images      String[]
-  lat         String
-  lan         String
+  location   TripLocation
+  description String?
   userId      String @db.ObjectId
   user        User   @relation(fields: [userId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@map("trips")
+}
+
+type TripLocation {
+  latitude Float
+  longitude Float
 }
 
 model Like {

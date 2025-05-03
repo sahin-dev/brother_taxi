@@ -2,8 +2,8 @@ import { GenderSubCategory, InterestType, TripDuration, TripType } from "@prisma
 import { z } from "zod";
 
 const CreateUserValidationSchema = z.object({
-  phone:z.string().nonempty("Phone is required"),
-  email:z.string().email().nonempty("Email is required"),
+  phone:z.string().optional(),
+  email:z.string().email().optional(),
   username: z.string().nonempty("Username is required"),
   dob:z.string({required_error:"Date of birth is required"}),
   residence_country:z.string().nonempty("country is required"),
@@ -78,9 +78,17 @@ const checkEmailSchema = z.object({
   email:z.string().email("Email invalid").nonempty("email is required")
 })
 
+const verifySetPhoneSchema = z.object({
+  
+  otp:z.string().nonempty("Otp is required"),
+  newPhone:z.string().nonempty("New phone number is required")  
+})
+
 export const UserValidation = {
   checkEmailSchema,
   CreateUserValidationSchema,
   UserLoginValidationSchema,
   userUpdateSchema,
 };
+
+

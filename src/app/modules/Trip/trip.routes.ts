@@ -1,15 +1,30 @@
 import { Router } from "express";
+import { fileUploader } from "../../../helpers/fileUploader";
+import { tripController } from "./trip.controller";
+import auth from "../../middlewares/auth.middleware";
+import validateRequest from "../../middlewares/validation.middleware";
+import { tripValidation } from "./trip.validation";
+
+
 
 const router = Router()
 //create a trip
-router.post ('/')
+router.post ('/', auth(),validateRequest(tripValidation.createTripSchema), tripController.createTrip)
 //read trips
-router.get('/')
+router.get('/', auth(), tripController.getMyTrips)
 //read a trip
-router.get('/:id')
+router.get('/:id',auth(), tripController.getTripById)
 //update a trip
-router.put("/:id")
-//delete a trip
-router.delete('/:id')
+// router.put("/:id")
+// //delete a trip
+// router.delete('/:id')
+router.post(
+    '/image-upload',
+    fileUploader.uploadMultipleImage,
+    auth(),
+    tripController.imageUpload
+  );
+  
+  
 
-export default router
+export const tripRoutes =  router

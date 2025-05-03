@@ -50,17 +50,22 @@ export interface IUserUpdate {
   
 }
 export interface IUser {
-  id?: string;
-  email?: string;
-  firstName: string;
-  lastName: string;
-  password?: string;
-  role?: UserRole;
-  profession:string;
-  promoCode:string;
-  isDeleted:boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
+  email?:string,
+  firstName?:string,
+  lastName?:string,
+  username?:string,
+  dob:Date,
+  about:string,
+  interests:InterestType[],
+  budgetMin:number,
+  budgetMax:number,
+  travelPartne:TravelPartner,
+  gender:{label:string, sub_categories?:GenderSubCategory[]},
+  tripType:TripType,
+  tripDuration:TripDuration,
+  tripContinent:string,
+  tripCountry:string,
+  interestAgeGroup:AgeGroup
 }
 
 export type IUserFilterRequest = {

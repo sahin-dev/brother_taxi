@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { AuthRoutes } from "../modules/Auth/auth.routes";
 import { userRoutes } from "../modules/User/user.route";
-import path from "path";
+import {tripRoutes} from "../modules/Trip/trip.routes";
 import { notificationsRoute } from "../modules/Notification/Notification.routes";
 import { likeRouter } from "../modules/Like/Like.routes";
 import { chatRoutes } from "../modules/Chat/chat.routes";
@@ -17,7 +17,8 @@ const moduleRoutes = [
     {path:'/like', route:likeRouter},
     {path:'/dislike', route:DislikeRouter},
     {path:'/chats', route:chatRoutes},
-    {path:'/payment',route:paymentRoutes}
+    {path:'/payment',route:paymentRoutes},
+    {path:'/trip', route:tripRoutes}
 ]
 
 moduleRoutes.forEach((route) => router.use(route.path, route.route));

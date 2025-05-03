@@ -1,14 +1,22 @@
-import { Server } from "http";
+import { createServer,Server } from "https";
 import config from "./config";
-
+import fs from "fs";
 import app from "./app";
 import { setupWebSocket } from "./helpers/websocketSetUp";
 
 let server: Server;
 const PORT = config.port || 5000
 
+//Https options
+const options = {
+  key: fs.readFileSync("./server.key"),
+  cert: fs.readFileSync("./server.cert"),
+};
+
+
 async function startServer() {
-  server = app.listen(PORT, () => {
+  server = createServer(options, app);
+  server.listen(PORT, () => {
     console.log("Server is listiening on port ", config.port);
   });
   await setupWebSocket(server);

@@ -9,10 +9,12 @@ import { User } from "@prisma/client";
 import ApiError from "../../../errors/ApiError";
 import { generateOtp } from "../../../helpers/generateOtp";
 import prisma from "../../../shared/prisma";
+import { send } from "process";
 
 
 const setUserPhone =  catchAsync(async (req:Request, res:Response)=>{
-  const result = await userService.setUserPhone(req.user.id, req.body)
+  const user = req.user
+  const result = await userService.setUserPhone(user.id)
   
 
   sendResponse(res,{
@@ -23,6 +25,18 @@ const setUserPhone =  catchAsync(async (req:Request, res:Response)=>{
   })
 })
 
+const verifySetUserPhone = catchAsync(async (req:Request, res:Response)=>{
+  const user = req.user
+  const {otp,phone} = req.body
+  const result = await userService.verifySetPhone(user.id,otp,phone)
+
+  sendResponse(res,{
+    statusCode:httpStatus.OK,
+    success:true,
+    message:"Phone number verified",
+    data:result
+  })
+})
 
 const checkEmail = catchAsync(async (req:Request, res: Response) =>{
   console.log("check email")
@@ -46,7 +60,8 @@ const checkUsername = catchAsync (async (req:Request, res:Response)=>{
 })
 
 const createUser = catchAsync(async (req: Request, res: Response) => {
-  const result = await userService.createUserIntoDb(req.body);
+  const user = req.user
+  const result = await userService.createUserIntoDb(user.id,req.body);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -88,13 +103,31 @@ const getUsers = catchAsync(async (req: Request, res: Response) => {
 
 
 const getMatchingUsers = catchAsync(async (req:Request, res:Response)=>{
-  
+    const userId = req.user.id
+    const {page , limit} = req.query as {page:string, limit:string}
+    
+    const result = await userService.getMatchingUsres(userId, parseInt(page), parseInt(limit))
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Matching users retrieved successfully!",
+      data: result,
+    });
 })
 
-const getMyProfile = catchAsync(async (req:Request, res:Response)=>{
-  
-})
 
+//update gender visibility
+
+const updateGenderVisibility = catchAsync(async (req:Request, res:Response)=>{
+  const userId = req.user.id
+  const result = await userService.updateGenderVisibility(userId)
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,  
+    message:"Gender visibility updated successfully",
+    data:result
+  })
+})
 
 
 // *! update user role and account status
@@ -131,6 +164,23 @@ const id = req.params.id;
     data: result,
   });
 });
+
+
+// // get user profile
+const getMyProfile = catchAsync(async (req: Request, res: Response) => {
+ 
+  const user = req.user; // Extract authenticated user's ID from request (assuming middleware sets req.user)
+
+  const result = await userService.getMyProfile(user.id);
+  sendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: "User profile retrieved successfully",
+    data: result,
+  });
+});
+
+
 // Controller for fetching users for the home page
 const getUserForHomePage = catchAsync(async (req: Request, res: Response) => {
   const authUserId = req.body; // Extract authenticated user's ID from request (assuming middleware sets req.user)
@@ -149,6 +199,18 @@ const getUserForHomePage = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const deleteUser = catchAsync(async (req: Request, res: Response) => {
+  const id = req.user.id; 
+  const result = await userService.deleteAccount(id);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "User deleted successfully!", 
+    data: result,  
+  })
+
+})
+
 
 export const userController = {
   createUser,
@@ -160,5 +222,10 @@ export const userController = {
   getSingleUserById,
   checkEmail,
   checkUsername,
-  setUserPhone
+  setUserPhone,
+  updateGenderVisibility,
+  deleteUser,
+  verifySetUserPhone,
+  getMatchingUsers,
+  getMyProfile
 };
