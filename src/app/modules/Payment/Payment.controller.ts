@@ -173,6 +173,26 @@ const getAllPayments = catchAsync(async (req, res) => {
   });
 });
 
+const getAllStripePrices = catchAsync(async (req: Request, res: Response) => {
+  const result = await PaymentService.getAllPricesFromStripe();
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Prices fetched successfully!',
+    data: result,
+  });
+});
+
+const getAllStripeProducts = catchAsync(async (req: Request, res: Response) => {
+  const result = await PaymentService.getAllStripeProducts(); 
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Products fetched successfully!',
+    data: result,
+  });
+});
+
 export const PaymentController = {
   createPrice,
   getAllPrices,
@@ -189,5 +209,7 @@ export const PaymentController = {
   monthlyStatistics,
   getMemberPlanCount,
   getAllPayments,
-  getPackageByPriceId
+  getPackageByPriceId,
+  getAllStripePrices,
+  getAllStripeProducts
 };

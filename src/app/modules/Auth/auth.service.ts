@@ -847,10 +847,10 @@ const sendOtp = async (
   method: 'email' | 'phone',
   requestType: RequestType
 ) => {
-  console.log
+
   const whereClause = method === 'email' ? { email: identifier } : { phone: identifier }
   const user = await prisma.user.findFirst({ where: whereClause })
-  console.log(user)
+
   const isSignup = requestType === RequestType.SIGNUP
   const isChangePhone = requestType === RequestType.CHANGE_PHONE
   const isLogin = requestType === RequestType.LOGIN
@@ -899,9 +899,9 @@ const verifyOtp = async (
   fcmToken?: string
 ) => {
   const whereClause = method === 'email' ? { email: identifier } : { phone: identifier }
-  console.log(whereClause)
+ 
   let user = await prisma.user.findFirst({ where: {email:identifier} })
-  console.log(user)
+
   if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found")
 
   validateOtp(user, otp)

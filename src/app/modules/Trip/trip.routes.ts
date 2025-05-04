@@ -20,8 +20,8 @@ router.get('/:id',auth(), tripController.getTripById)
 // router.delete('/:id')
 router.post(
     '/image-upload',
-    fileUploader.uploadMultipleImage,
     auth(),
+    fileUploader.uploadMultipleImage,
     tripController.imageUpload
   );
   

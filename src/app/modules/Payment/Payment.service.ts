@@ -10,6 +10,7 @@ import ApiError from '../../../errors/ApiError';
 import { IUser } from '../User/user.interface';
 import { User } from '@prisma/client';
 import config from '../../../config';
+import { get } from 'http';
 
 
 
@@ -649,6 +650,33 @@ const getMemberPlanCount = async (query: any) => {
 const getAllPayments = () => {
   return prisma.paymentInfo.findMany({ orderBy: { createdAt: 'desc' } });
 };
+
+const getAllPricesFromStripe = async () => {
+  try { 
+    const prices = await stripe.prices.list({
+      limit: 100, // Adjust the limit as needed
+    });
+    return prices.data;
+  }
+  catch (error) {
+    console.error('Error fetching prices from Stripe:', error);
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to fetch prices from Stripe');
+  }
+}
+
+
+const getAllStripeProducts = async () => {  
+  try {
+    const products = await stripe.products.list({
+      limit: 100, // Adjust the limit as needed
+    });
+    return products.data;
+  } catch (error) {
+    console.error('Error fetching products from Stripe:', error);
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Failed to fetch products from Stripe');
+  }
+}
+
 export const PaymentService = {
   createPrice,
   getAllPrices,
@@ -665,5 +693,7 @@ export const PaymentService = {
   monthlyStatistics,
   getMemberPlanCount,
   getAllPayments,
-  getPackageByPriceId
+  getPackageByPriceId,
+  getAllPricesFromStripe,
+  getAllStripeProducts
 };

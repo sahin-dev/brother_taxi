@@ -43,7 +43,7 @@ const getTripById = catchAsync(async (req: Request, res: Response) => {
 
 
 const imageUpload = catchAsync(async (req: Request, res: Response) => {
-
+    
     if (
       !req.files ||
       !(req.files as { [fieldname: string]: Express.Multer.File[] })['images'] ||
@@ -51,7 +51,7 @@ const imageUpload = catchAsync(async (req: Request, res: Response) => {
     ) {
       throw new TypeError('Expected an array of files in req.files["images"]');
     }
-  
+    console.log("hi")
     const result = await tripServices.imageUpload(
       (req.files as { [fieldname: string]: Express.Multer.File[] })['images']
     );

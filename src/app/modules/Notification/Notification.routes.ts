@@ -11,6 +11,7 @@ router.post(
 );
 
 router.put('/read/:notificationId', auth(), notificationController.readNotification)
+
 router.post(
   "/send-notification",
   auth(),
@@ -18,6 +19,7 @@ router.post(
 );
 
 router.get("/", auth(), notificationController.getNotifications);
+
 router.get(
   "/:notificationId",
   auth(),

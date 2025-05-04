@@ -58,10 +58,11 @@ const updateTrip = async (id:string,tripId:string,payload:any) => {
 
 // upload image 
 const imageUpload = async (files: Express.Multer.File[]) => {
-    console.log("Uploading image")
+    
     if (!Array.isArray(files)) {
       throw new TypeError("Expected an array of files");
     }
+    console.log("files")
     const uploadPromises = files.map(async (file) => {
       const uploadResponse = await fileUploader.uploadToDigitalOcean(file);
       if (!uploadResponse || !uploadResponse.Location) {

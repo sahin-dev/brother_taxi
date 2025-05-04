@@ -23,5 +23,8 @@ router.post('/cancel-subscription',auth(UserRole.USER), PaymentController.cancel
   router.get('/membership', PaymentController.getMemberPlanCount)
   router.get('/', PaymentController.getAllPayments)
 
+  router.get('/all-stripe-prices', PaymentController.getAllStripePrices)
+
+  router.get('/all-stripe-products', PaymentController.getAllStripeProducts)
 
 export const paymentRoutes = router;

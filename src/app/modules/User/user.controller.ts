@@ -142,6 +142,7 @@ const user = req.user;
     data: result,
   });
 });
+
 // *! update user role and account status
 const getRandomUser = catchAsync(async (req: Request, res: Response) => {
 const id = req.params.id;

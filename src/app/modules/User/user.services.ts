@@ -1,4 +1,4 @@
-import { AgeGroup, Prisma, User } from "@prisma/client";
+import { AgeGroup, Prisma, User, UserStatus } from "@prisma/client";
 import * as bcrypt from "bcrypt";
 import { Request } from "express";
 import httpStatus from "http-status";
@@ -19,12 +19,14 @@ import { generateOtp } from "../../../helpers/generateOtp";
 import { differenceInYears } from "date-fns";
 
 
+
 const setUserPhone  = async (id:string)=>{
   const user = await prisma.user.findUnique({where:{id}})
   
   if(!user){
     throw new ApiError(httpStatus.NOT_FOUND, "User not found")
   }
+  
   if (user.phone){
     throw new ApiError(httpStatus.BAD_REQUEST, "User already has a phone number")
   }
@@ -34,7 +36,9 @@ const setUserPhone  = async (id:string)=>{
   await prisma.user.update({where:{id}, data:{otp, otpExpiresIn:expiresIn}})
   const emailSubject = "Your OTP for Account Verification";
   const emailHtml = generateOtpEmailHtml(user.email!, otp);
-  await emailSender(user.email!, emailHtml, emailSubject);
+  if (user.email){
+  await emailSender(user.email, emailHtml, emailSubject);
+  }
   console.log(`OTP sent to ${user.email}`);
 
   return {message:"Otp sent to your email"}
@@ -416,6 +420,7 @@ const updateUser = async (payload: IUserUpdate, userId: string) => {
 
   const updateData: any = {
     ...payload,
+    status: UserStatus.ACTIVE,
     // Lock immutable/sensitive fields
     username: user.username,
     email: user.email,

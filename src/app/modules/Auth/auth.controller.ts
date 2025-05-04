@@ -213,7 +213,7 @@ const verifyOtp = catchAsync(async (req:Request, res:Response)=>{
   
   const result = await AuthServices.verifyOtp(identifier,otp,requestType,method)
   ApiResponse(res, {
-    statusCode:httpStatus.OK,
+    statusCode:requestType.toLowerCase() === "signup" ? httpStatus.CREATED : httpStatus.OK,
     success:true,
     message:"OTP verified successfully",
     data:result
