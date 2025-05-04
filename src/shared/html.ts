@@ -94,7 +94,7 @@ export const generateOtpEmailHtml = (email:string, otp:string) => {
 
     <!-- Body -->
     <div class="email-body">
-      <h2>Welcome${email} to Our Platform!</h2>
+      <h2>Welcome ${email} to Our Platform!</h2>
       <p>To verify your email address, please use the following OTP:</p>
       <div class="otp-code">${otp}</div>
       <p>This OTP will expire in <strong>15 minutes</strong>.</p>

@@ -12,6 +12,8 @@ import prisma from "../../db/client";
 import { generateOtp } from "../../../helpers/generateOtp";
 import jwt from "jsonwebtoken";
 import { getApplePublicKey } from "../../../helpers/applePublicKey";
+import { generateOtpEmailHtml } from "../../../shared/html";
+
 
 
 
@@ -152,15 +154,11 @@ const appleLogin = async (appleProfile:any)=>{
 }
 
 // // get user profile
-const getMyProfile = async (userToken: string) => {
-  const decodedToken = verifyToken(
-    userToken,
-    config.jwt.jwt_secret!
-  );
-
+const getMyProfile = async (userId: string) => {
+  
   const userProfile = await prisma.user.findUnique({
     where: {
-      id: decodedToken.id,
+      id: userId,
     },
     select: {
       id: true,
@@ -189,38 +187,39 @@ const getMyProfile = async (userToken: string) => {
 };
 
 const verifyWithEmail = async (email:string,requetsType:RequestType)=>{
-  let user = await prisma.user.findFirst({where:{email}})
+  let user = await prisma.user.findFirst({where:{email,status:UserStatus.ACTIVE}})
+
 
   if (requetsType === RequestType.LOGIN){
     
     if (!user){
-      throw new ApiError(httpStatus.NOT_FOUND, "User not found!")
+      throw new ApiError(httpStatus.NOT_FOUND, "User not found or not active")
     }
-    
     
   }else if (requetsType === RequestType.CHANGE_PHONE){ 
 
     if (!user){
-      throw new ApiError(httpStatus.NOT_FOUND, "User not found")
+      throw new ApiError(httpStatus.NOT_FOUND, "User not found or not active")
     }
 
 
   }else if (requetsType === RequestType.SIGNUP){
-
+ 
     if (user){
-
       throw new ApiError(httpStatus.BAD_REQUEST, `User with this email ${email} already exist.`)
     }
+    const inactiveUser = await prisma.user.findFirst({where:{email,status:UserStatus.INACTIVE}})
 
-    user = await prisma.user.create({data:{email}})
-
-
+    if (inactiveUser){
+      user = inactiveUser
+    }else{
+      user = await prisma.user.create({data:{email}})
+    }
     
   }
-
-  
   const otp = generateOtp()
   const otpExpiary = new Date(Date.now() + 5 * 60 * 1000)
+  
   if (user)
     await prisma.user.update({where:{id:user.id},data:{otp,otpExpiresIn:otpExpiary}})
 
@@ -253,23 +252,31 @@ const verifyWithEmail = async (email:string,requetsType:RequestType)=>{
 }
 
 const verifyRequestWithEmail = async (email:string, otp:string, requestType:RequestType, newPhone?:string,fcmToken?:string)=>{
-  const user = await prisma.user.findFirst({where:{email}})
-
-  if (!user){
-    throw new ApiError(httpStatus.NOT_FOUND, "User not found")
-  }
   
-  if(!user.otp){
-    throw new ApiError(httpStatus.NOT_FOUND, "Otp is not present")
-  }
+
+  // if (!user){
+  //   throw new ApiError(httpStatus.NOT_FOUND, "User not found")
+  // }
+  
+  // if(!user.otp){
+  //   throw new ApiError(httpStatus.NOT_FOUND, "Otp is not present")
+  // }
   
  
-  if (user.otp !== otp || !user.otpExpiresIn || user.otpExpiresIn < new Date()){
-    throw new ApiError (httpStatus.BAD_REQUEST, "Otp is invalid")
-  }
-  await prisma.user.update({where:{id:user.id}, data:{otp:null, otpExpiresIn:null}})
+  // if (user.otp !== otp || !user.otpExpiresIn || user.otpExpiresIn < new Date()){
+  //   throw new ApiError (httpStatus.BAD_REQUEST, "Otp is invalid")
+  // }
+  // await prisma.user.update({where:{id:user.id}, data:{otp:null, otpExpiresIn:null}})
   let result;
   if (requestType === RequestType.LOGIN){
+    const user = await prisma.user.findFirst({where:{email,status:UserStatus.ACTIVE}})
+    if (!user || user.status === UserStatus.INACTIVE){
+      throw new ApiError(httpStatus.NOT_FOUND, "User not found or not active")
+    }
+
+    if (user.otp !== otp || !user.otpExpiresIn || user.otpExpiresIn < new Date()){
+      throw new ApiError (httpStatus.BAD_REQUEST, "Otp is invalid")
+    }
 
     if (fcmToken) {
       await prisma.user.update({
@@ -292,14 +299,27 @@ const verifyRequestWithEmail = async (email:string, otp:string, requestType:Requ
   
 
   }else if(requestType === RequestType.SIGNUP) {
+    const user = await prisma.user.findFirst({where:{email,status:UserStatus.ACTIVE}})
+    if(user)  {
+      throw new ApiError(httpStatus.BAD_REQUEST, `User with this email ${email} already exist.`)
+    }
+    const inactiveUser = await prisma.user.findFirst({where:{email,status:UserStatus.INACTIVE}})
+    if (!inactiveUser){
+      throw new ApiError(httpStatus.NOT_FOUND, "User not found")
+    }
+    
+    if (inactiveUser.otp !== otp || !inactiveUser.otpExpiresIn || inactiveUser.otpExpiresIn < new Date()){
+      throw new ApiError (httpStatus.BAD_REQUEST, "Otp is invalid")
+    }
 
-    await prisma.user.update({where:{id:user.id}, data:{status:UserStatus.ACTIVE}})
+
+    await prisma.user.update({where:{id:inactiveUser.id}, data:{status:UserStatus.ACTIVE}})
     
     const accessToken = generateToken(
       {
-        id: user.id,
-        phone: user.phone,
-        role:user.role
+        id: inactiveUser.id,
+        phone: inactiveUser.phone,
+        role:inactiveUser.role
       },
       config.jwt.jwt_secret as Secret,
       config.jwt.expires_in as string
@@ -307,6 +327,18 @@ const verifyRequestWithEmail = async (email:string, otp:string, requestType:Requ
     result =  {message:"User account active",token:accessToken}
 
   }else if (requestType === RequestType.CHANGE_PHONE){
+    const user = await prisma.user.findFirst({where:{email,status:UserStatus.ACTIVE}})
+    if (!user || user.status === UserStatus.INACTIVE){
+      throw new ApiError(httpStatus.NOT_FOUND, "User not found or not active")
+    }
+
+    if (!newPhone){
+      throw new ApiError(httpStatus.BAD_REQUEST, "New phone number is required")
+    }
+
+    if (user.otp !== otp || !user.otpExpiresIn || user.otpExpiresIn < new Date()){
+      throw new ApiError (httpStatus.BAD_REQUEST, "Otp is invalid")
+    }
 
     await prisma.user.update({where:{id:user.id}, data:{phone:newPhone}})
     result = {message:"Phone number change successfully."}
@@ -318,12 +350,18 @@ const verifyRequestWithEmail = async (email:string, otp:string, requestType:Requ
 
 
 const verifyPhoneNumber = async ({phone,requestType}:{phone:string, requestType:string})=>{
+  const user = await prisma.user.findFirst({where:{phone}})
 
   if (requestType === RequestType.LOGIN){
-    const user = await prisma.user.findFirst({where:{phone}})
+
     if (!user){
       throw new ApiError(httpStatus.NOT_FOUND, "User not found!")
     }
+
+    if (user.status === UserStatus.INACTIVE){
+      throw new ApiError(httpStatus.NOT_FOUND, "User account is inactive")
+    }
+    
     const otp = generateOtp()
     const otpExpiary = new Date(Date.now() + 5 * 60 * 1000)
 
@@ -332,9 +370,12 @@ const verifyPhoneNumber = async ({phone,requestType}:{phone:string, requestType:
     return {message:"Otp send successfully"}
 
   }else if (requestType === RequestType.CHANGE_PHONE){
-    const user = await prisma.user.findFirst({where:{phone}})
+    // const user = await prisma.user.findFirst({where:{phone}})
     if (!user){
       throw new ApiError(httpStatus.NOT_FOUND, "User not found")
+    }
+    if (user.status === UserStatus.INACTIVE){
+      throw new ApiError(httpStatus.NOT_FOUND, "User account is inactive")
     }
     
     const otp = generateOtp()
@@ -345,19 +386,51 @@ const verifyPhoneNumber = async ({phone,requestType}:{phone:string, requestType:
     return {message:"Otp send successfully"}
 
   }else if (requestType === RequestType.SIGNUP){
-
-    const userPresent = await checkUserExistence(phone)
-
-    if (userPresent){
-
+    const activeUser = await prisma.user.findFirst({where:{phone,status:UserStatus.ACTIVE}})
+    if (activeUser){
       throw new ApiError(httpStatus.BAD_REQUEST, `User with this phone ${phone} already exist.`)
     }
 
+    const inactiveUser = await prisma.user.findFirst({where:{phone,status:UserStatus.INACTIVE}})
+
+
+    // const userPresent = await checkUserExistence(phone)
+   
+
     const otp = generateOtp()
     const otpExpiary = new Date(Date.now() + 15 * 60 * 1000)
-
     
-    await prisma.user.create({data:{phone,otp,otpExpiresIn:otpExpiary}})
+    if (!inactiveUser){
+      await prisma.user.create({data:{phone,otp,otpExpiresIn:otpExpiary}})
+    }else{
+      await prisma.user.update({where:{id:inactiveUser.id},data:{otp,otpExpiresIn:otpExpiary}}) 
+    }
+    
+    const html = `
+    <div style="font-family: Arial, sans-serif; color: #333; padding: 30px; background: linear-gradient(135deg, #6c63ff, #3f51b5); border-radius: 8px;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 30px; border-radius: 8px;">
+            <h2 style="color: #ffffff; font-size: 28px; text-align: center; margin-bottom: 20px;">
+                <span style="color: #ffeb3b;">Resend OTP</span>
+            </h2>
+            <p style="font-size: 16px; color: #333; line-height: 1.5; text-align: center;">
+                Here is your new OTP code to complete the process.
+            </p>
+            <p style="font-size: 32px; font-weight: bold; color: #ff4081; text-align: center; margin: 20px 0;">
+                ${otp}
+            </p>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <p style="font-size: 14px; color: #555; margin-bottom: 10px;">
+                    This OTP will expire in <strong>15 minutes</strong>. If you did not request this, please ignore this email.
+                </p>
+                <p style="font-size: 14px; color: #555; margin-bottom: 10px;">
+                    If you need further assistance, feel free to contact us.
+                </p>
+            </div>
+            <div style="text-align: center; margin-top: 30px;">
+                <p style="font-size: 12px; color: #999; text-align: center;">
+                    Best Regards,<br/>
+                    <span style="font-weight: bold; color: #3f51b5;">`
+      
 
 
     return {message:"Otp sent successfully. Otp willbe valid for 15 minutes."}
@@ -368,9 +441,18 @@ const verifyRequest  = async ({phone,otp,requestType, newPhone,fcmToken}:{phone:
 
   const user = await prisma.user.findFirst({where:{phone}})
 
+  
   if (!user){
     throw new ApiError(httpStatus.NOT_FOUND, "User not found")
   }
+
+  if (requestType === RequestType.LOGIN){
+
+    if (user.status === UserStatus.INACTIVE){
+      throw new ApiError(httpStatus.NOT_FOUND, "User account is inactive")
+    }
+  }
+
 
   if(!user.otp){
     throw new ApiError(httpStatus.NOT_FOUND, "Otp is not present")
@@ -382,9 +464,13 @@ const verifyRequest  = async ({phone,otp,requestType, newPhone,fcmToken}:{phone:
   }
 
   await prisma.user.update({where:{id:user.id}, data:{otp:null, otpExpiresIn:null}})
+
   let result;
   if (requestType === RequestType.LOGIN){
 
+    if (user.status === UserStatus.INACTIVE){
+      throw new ApiError(httpStatus.NOT_FOUND, "User account is inactive")
+    }
     if (fcmToken) {
       await prisma.user.update({
         where: { id: user.id },
@@ -406,8 +492,9 @@ const verifyRequest  = async ({phone,otp,requestType, newPhone,fcmToken}:{phone:
   
 
   }else if(requestType === RequestType.SIGNUP) {
+    
 
-    await prisma.user.update({where:{id:user.id}, data:{status:UserStatus.ACTIVE}})
+    await prisma.user.update({where:{id:user.id}, data:{ fcmToken:fcmToken?fcmToken:null,status:UserStatus.ACTIVE}})
     
     const accessToken = generateToken(
       {
@@ -736,7 +823,125 @@ const resendOtp = async (phone: string) => {
 //         throw new ApiError(httpStatus.UNAUTHORIZED, "Otp does not match!")
 //     }
 //     return {message:"Phone number verified successfully"}
+
 // }
+
+
+const generateOtpAndExpiry = (minutes = 5) => {
+  const otp = generateOtp()
+  const otpExpiresIn = new Date(Date.now() + minutes * 60 * 1000)
+  return { otp, otpExpiresIn }
+}
+
+const validateOtp = (user:any, otp: string) => {
+  if (!user.otp || !user.otpExpiresIn || user.otp !== otp || user.otpExpiresIn < new Date()) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Otp is invalid or expired")
+  }
+}
+
+
+
+
+const sendOtp = async (
+  identifier: string,
+  method: 'email' | 'phone',
+  requestType: RequestType
+) => {
+  console.log
+  const whereClause = method === 'email' ? { email: identifier } : { phone: identifier }
+  const user = await prisma.user.findFirst({ where: whereClause })
+  console.log(user)
+  const isSignup = requestType === RequestType.SIGNUP
+  const isChangePhone = requestType === RequestType.CHANGE_PHONE
+  const isLogin = requestType === RequestType.LOGIN
+
+  const otpData = generateOtpAndExpiry(isSignup ? 15 : 5)
+
+  if (isSignup) {
+    if (user && user.status === UserStatus.ACTIVE)
+      throw new ApiError(httpStatus.BAD_REQUEST, `User with this ${method} already exists.`)
+
+    if (user && user.status === UserStatus.INACTIVE) {
+      await prisma.user.update({ where: { id: user.id }, data: otpData })
+    } else {
+      const createData = method === 'email' ? { email: identifier } : { phone: identifier }
+      await prisma.user.create({ data: { ...createData, ...otpData } })
+    }
+  } else {
+    if (!user || user.status !== UserStatus.ACTIVE)
+      throw new ApiError(httpStatus.NOT_FOUND, `User not found or inactive.`)
+
+    await prisma.user.update({ where: { id: user.id }, data: otpData })
+  }
+
+  if (method === 'email') {
+    const html = `
+      <div style="font-family: Arial, sans-serif;">
+        <h2>OTP for ${requestType}</h2>
+        <p>Your OTP is: <strong>${otpData.otp}</strong></p>
+        <p>This OTP will expire in ${requestType === RequestType.SIGNUP ? "15" : "5"} minutes.</p>
+      </div>
+    `;
+    // const html = generateOtpEmailHtml(otpData.otp, requestType)
+    await emailSender(identifier, html, "Otp verification for Roady App")
+  }
+
+  return { message: `Otp sent successfully to your ${method}.` }
+}
+
+
+const verifyOtp = async (
+  identifier: string,
+  otp: string,
+  requestType: RequestType,
+  method: 'email' | 'phone',
+  newPhone?: string,
+  fcmToken?: string
+) => {
+  const whereClause = method === 'email' ? { email: identifier } : { phone: identifier }
+  console.log(whereClause)
+  let user = await prisma.user.findFirst({ where: {email:identifier} })
+  console.log(user)
+  if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found")
+
+  validateOtp(user, otp)
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { otp: null, otpExpiresIn: null }
+  })
+
+  if (requestType === RequestType.LOGIN || requestType === RequestType.SIGNUP) {
+    const updateData: any = {}
+    if (fcmToken) updateData.fcmToken = fcmToken
+    if (requestType === RequestType.SIGNUP) updateData.status = UserStatus.ACTIVE
+
+    if (Object.keys(updateData).length) {
+      await prisma.user.update({ where: { id: user.id }, data: updateData })
+    }
+
+    const token = generateToken(
+      { id: user.id, phone: user.phone, role: user.role },
+      config.jwt.jwt_secret as Secret,
+      config.jwt.expires_in as string
+    )
+
+    return { message: requestType === RequestType.SIGNUP ? "User activated" : "Login successful", token }
+  }
+
+  if (requestType === RequestType.CHANGE_PHONE) {
+    if (!newPhone) throw new ApiError(httpStatus.BAD_REQUEST, "New phone number is required")
+
+    await prisma.user.update({ where: { id: user.id }, data: { phone: newPhone } })
+    return { message: "Phone number changed successfully" }
+  }
+
+  return { message: "Verification completed" }
+}
+
+
+
+
 
 export const AuthServices = {
   initiateLogin,
@@ -748,6 +953,8 @@ export const AuthServices = {
   googleLogin,
   verifyWithEmail,
   verifyRequestWithEmail,
+  sendOtp,
+  verifyOtp,
 //   changePassword,
 //   forgotPassword,
 //   resetPassword,

@@ -85,11 +85,16 @@ const verifySetPhoneSchema = z.object({
   newPhone:z.string().nonempty("New phone number is required")  
 })
 
+
+const setUsernameSchema = z.object({
+  username:z.string().nonempty("Username is required")
+})
 export const UserValidation = {
   checkEmailSchema,
   CreateUserValidationSchema,
   UserLoginValidationSchema,
   userUpdateSchema,
+  setUsernameSchema,
 };
 
 

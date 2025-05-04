@@ -16,7 +16,7 @@ import { jwtHelpers, verifyToken } from "../../../helpers/jwt";
 import { PassThrough } from "stream";
 import { calculateAge } from "../../../shared/calculateAge";
 import { generateOtp } from "../../../helpers/generateOtp";
-import { skip } from "@prisma/client/runtime/library";
+import { differenceInYears } from "date-fns";
 
 
 const setUserPhone  = async (id:string)=>{
@@ -400,6 +400,106 @@ const updateUserIntoDb = async (payload: IUserUpdate, id: string) => {
 
   return result;
 };
+
+
+
+
+
+const updateUser = async (payload: IUserUpdate, userId: string) => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, `User not found with id: ${userId}`);
+  }
+
+  const updateData: any = {
+    ...payload,
+    // Lock immutable/sensitive fields
+    username: user.username,
+    email: user.email,
+    phone: user.phone,
+  };
+
+  // Auto-calculate age if dob is provided
+  if (payload.dob) {
+    updateData.age = differenceInYears(new Date(), new Date(payload.dob));
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: user.id },
+    data: updateData,
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      username: true,
+      gender: true,
+      about: true,
+      role: true,
+      createdAt: true,
+      updatedAt: true,
+      phone: true,
+    },
+  });
+
+  return updatedUser;
+};
+
+
+const setOrChangeUsername = async (userId: string, newUsername: string) => {
+  if (!newUsername || newUsername.trim() === "") {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Username is required");
+  }
+
+  // Clean up the username
+  newUsername = newUsername.trim().toLowerCase();
+
+  // Check if username already exists
+  const existingUser = await prisma.user.findFirst({
+    where: {
+      username: newUsername,
+      deleted: false,
+    },
+  });
+
+  if (existingUser) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Username is already taken");
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  // Optional: prevent changing username once set
+  if (user.username) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Username has already been set and cannot be changed");
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: { username: newUsername },
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      phone: true,
+      firstName: true,
+      lastName: true,
+    },
+  });
+
+  return {
+    message: "Username set successfully",
+    user: updatedUser,
+  };
+};
+
+
 
 // get random user
 
@@ -847,6 +947,7 @@ export const userService = {
   getUsersFromDb,
   // updateProfile,
   updateUserIntoDb,
+  updateUser,
   getRandomUser,
   getUserForHomePage,
   getSingleUserById,
@@ -857,5 +958,6 @@ export const userService = {
   deleteAccount,
   verifySetPhone,
   getMatchingUsres,
-  getMyProfile
+  getMyProfile,
+  setOrChangeUsername
 };

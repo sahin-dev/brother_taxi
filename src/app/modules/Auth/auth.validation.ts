@@ -53,3 +53,19 @@ export const changePasswordValidationSchema = z.object({
     newPhone:z.string({invalid_type_error:"phone is invalid"}).optional(),
     fcmToken:z.string().optional()
   })
+
+  
+export const sendOtpSchema = z.object({
+  identifier: z.string().min(1, "Email or phone is required"),
+  method: z.enum(["email", "phone"]),
+  requestType: z.nativeEnum(RequestType)
+});
+
+export const verifyOtpSchema = z.object({
+  identifier: z.string().min(1, "Email or phone is required"),
+  otp: z.string().length(6, "OTP must be 6 digits"),
+  requestType: z.nativeEnum(RequestType),
+  method: z.enum(["email", "phone"]),
+  newPhone: z.string().optional(),
+  fcmToken: z.string().optional()
+});

@@ -12,6 +12,7 @@ import prisma from "../../../shared/prisma";
 import { send } from "process";
 
 
+
 const setUserPhone =  catchAsync(async (req:Request, res:Response)=>{
   const user = req.user
   const result = await userService.setUserPhone(user.id)
@@ -133,7 +134,7 @@ const updateGenderVisibility = catchAsync(async (req:Request, res:Response)=>{
 // *! update user role and account status
 const updateUser = catchAsync(async (req: Request, res: Response) => {
 const user = req.user;
-  const result = await userService.updateUserIntoDb( req.body,user.id);
+  const result = await userService.updateUser( req.body,user.id);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -211,11 +212,25 @@ const deleteUser = catchAsync(async (req: Request, res: Response) => {
 
 })
 
+const setUsername = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user; // Extract authenticated user's ID from request (assuming middleware sets req.user)  
+  const { username } = req.body; // Extract username from request body
+  const result = await userService.setOrChangeUsername(user.id, username); // Call service to set username
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Username set successfully", // Success message
+    data: result, // Return the result from the service 
+})
+  
+  })
+
 
 export const userController = {
   createUser,
   getUsers,
   // updateProfile,
+  setUsername,
   updateUser,
   getRandomUser,
   getUserForHomePage,

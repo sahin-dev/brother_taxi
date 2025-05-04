@@ -47,6 +47,9 @@ export interface IUserUpdate {
   interestAgeGroup?:AgeGroup
   
 }
+
+
+
 export interface IUser {
 
   firstName?:string,

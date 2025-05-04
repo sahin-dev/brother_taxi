@@ -22,7 +22,7 @@ const verifyRequestWithEmail = catchAsync(async (req:Request, res:Response)=>{
 
   const result = await AuthServices.verifyRequestWithEmail(email,otp,requestType,fcmToken)
   ApiResponse(res,{
-    statusCode:httpStatus.OK,
+    statusCode:requestType.toLowerCase() === "signup" ? httpStatus.CREATED : httpStatus.OK,
     success:true,
     message:"OTP verified successfully",
     data:result
@@ -56,9 +56,10 @@ const googleLogin = catchAsync(async (req:Request, res:Response)=>{
 
 const verifyRequest = catchAsync(async (req:Request, res: Response)=>{
   const result = await AuthServices.verifyRequest(req.body)
+  const requestType = req.body.requestType
 
   ApiResponse(res, {
-    statusCode:httpStatus.OK,
+    statusCode:requestType.toLowerCase() === "signup" ? httpStatus.CREATED : httpStatus.OK,
     success:true,
     message:"Request verified successfully",
     data:result
@@ -107,9 +108,9 @@ const logoutUser = catchAsync(async (req: Request, res: Response) => {
 // // get user profile
 const getMyProfile = catchAsync(async (req: Request, res: Response) => {
  
-  const userToken = req.headers.authorization?.split(" ")[1] || "";
+  const user = req.user;
 
-  const result = await AuthServices.getMyProfile(userToken);
+  const result = await AuthServices.getMyProfile(user.id as string);
   ApiResponse(res, {
     success: true,
     statusCode: 200,
@@ -195,12 +196,38 @@ const resendOtp = catchAsync(async (req: Request, res: Response) => {
 //     await 
 // })
 
+
+const sendOtp = catchAsync(async (req:Request, res:Response)=>{
+  const {identifier, method, requestType} = req.body
+  const result = await AuthServices.sendOtp(identifier,method,requestType)
+  ApiResponse(res, {
+    statusCode:httpStatus.OK,
+    success:true,
+    message:"OTP sent successfully",
+    data:result
+  })
+})
+
+const verifyOtp = catchAsync(async (req:Request, res:Response)=>{
+  const {identifier, otp, requestType, method} = req.body
+  
+  const result = await AuthServices.verifyOtp(identifier,otp,requestType,method)
+  ApiResponse(res, {
+    statusCode:httpStatus.OK,
+    success:true,
+    message:"OTP verified successfully",
+    data:result
+  })
+})
+
 export const AuthController = {
   loginUser,
   logoutUser,
   getMyProfile,
   verifyPhone, 
   verifyRequest,
+  sendOtp,
+  verifyOtp,
 //   changePassword,
 //   forgotPassword,
 //   resetPassword,
