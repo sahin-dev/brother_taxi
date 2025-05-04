@@ -132,8 +132,8 @@ const updateGenderVisibility = catchAsync(async (req:Request, res:Response)=>{
 
 // *! update user role and account status
 const updateUser = catchAsync(async (req: Request, res: Response) => {
-const id = req.params.id;
-  const result = await userService.updateUserIntoDb( req.body,id);
+const user = req.user;
+  const result = await userService.updateUserIntoDb( req.body,user.id);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,

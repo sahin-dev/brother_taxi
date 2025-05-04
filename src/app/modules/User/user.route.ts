@@ -26,7 +26,7 @@ router.post('/check-email',validateRequest(UserValidation.checkEmailSchema), use
 router.get("/match-user",auth(), userController.getMatchingUsers);
 router.post('/check-username', userController.checkUsername)
 router.get("/:id", userController.getSingleUserById);
-router.put("/:id",validateRequest(UserValidation.userUpdateSchema), userController.updateUser);
+router.put("/",auth(),validateRequest(UserValidation.userUpdateSchema), userController.updateUser);
 router.delete("/",auth(), userController.deleteUser);
 
 
