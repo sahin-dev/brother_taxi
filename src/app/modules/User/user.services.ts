@@ -96,10 +96,19 @@ const generateSignUpOtp = async ({phone}:{phone:string})=>{
 // Create a new user in the database.
 const createUserIntoDb = async (userId:string,payload:IUser) => {
   const user = await prisma.user.findUnique({where:{id:userId}})
+  console.log(user)
   if (!user) { 
     throw new ApiError(httpStatus.NOT_FOUND, "User not found")
    }
 
+
+   if (payload.username){
+    const existingUser = await prisma.user.findFirst({where:{username:payload.username}})
+    if (existingUser){
+      throw new ApiError(httpStatus.CONFLICT, "User with this username already exist")
+    }
+   }
+ 
   // if (existingUser) {
   //   if (existingUser.phone === payload.phone) {
   //     throw new ApiError(
@@ -130,11 +139,16 @@ const createUserIntoDb = async (userId:string,payload:IUser) => {
 
   // Create the user and save the OTP and expiry in the database
   const age  = calculateAge(payload.dob)
-  const newUser = await prisma.user.create({
+  
+  const newUser = await prisma.user.update({where:{id:userId},
     data: {
      ...payload,
       age,
       isCompleteProfile: true,
+      phone:user.phone,
+      email:user.email,
+      status:"ACTIVE",
+      
     },
     select: {
       id: true,
@@ -349,8 +363,8 @@ const getUserProfile = async (userId:string)=>{
 // };
 
 // update user data into database by id for admin
-const updateUserIntoDb = async ({email, username, about,budgetMax,budgetMin,dob,firstName,gender,genderVisibility,interestAgeGroup,interests,lastName,travelPartner,tripContinent,tripCountry,tripDuration,tripType}: IUserUpdate, id: string) => {
-  const userInfo = await prisma.user.findUniqueOrThrow({
+const updateUserIntoDb = async (payload: IUserUpdate, id: string) => {
+  const userInfo = await prisma.user.findUnique({
     where: {
       id: id,
     },
@@ -362,7 +376,7 @@ const updateUserIntoDb = async ({email, username, about,budgetMax,budgetMin,dob,
     where: {
       id: userInfo.id,
     },
-    data: {email,firstName,lastName, username, about,budgetMax,budgetMin,dob,gender,genderVisibility,interestAgeGroup,interests,travelPartner,tripContinent,tripCountry,tripDuration,tripType},
+    data: {...payload,username:userInfo.username,email:userInfo.email,phone:userInfo.phone},
     select: {
       id: true,
       email: true,

@@ -258,6 +258,7 @@ const verifyRequestWithEmail = async (email:string, otp:string, requestType:Requ
   if (!user){
     throw new ApiError(httpStatus.NOT_FOUND, "User not found")
   }
+  
   if(!user.otp){
     throw new ApiError(httpStatus.NOT_FOUND, "Otp is not present")
   }
@@ -370,6 +371,7 @@ const verifyRequest  = async ({phone,otp,requestType, newPhone,fcmToken}:{phone:
   if (!user){
     throw new ApiError(httpStatus.NOT_FOUND, "User not found")
   }
+
   if(!user.otp){
     throw new ApiError(httpStatus.NOT_FOUND, "Otp is not present")
   }
@@ -378,6 +380,7 @@ const verifyRequest  = async ({phone,otp,requestType, newPhone,fcmToken}:{phone:
   if (user.otp !== otp || !user.otpExpiresIn || user.otpExpiresIn < new Date()){
     throw new ApiError (httpStatus.BAD_REQUEST, "Otp is invalid")
   }
+
   await prisma.user.update({where:{id:user.id}, data:{otp:null, otpExpiresIn:null}})
   let result;
   if (requestType === RequestType.LOGIN){

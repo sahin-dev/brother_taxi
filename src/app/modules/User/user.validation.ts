@@ -55,6 +55,7 @@ const UserLoginValidationSchema = z.object({
 //   otpExpiresIn   DateTime?
 
 const userUpdateSchema = z.object({
+
   email:z.string().email().optional(),
   username: z.string().optional(),
   firstName:z.string().optional(),

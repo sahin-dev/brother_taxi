@@ -30,10 +30,8 @@ import { boolean } from "zod";
 
 
 export interface IUserUpdate {
-  email?:string,
   firstName?:string,
   lastName?:string,
-  username?:string,
   dob?:Date,
   about?:string,
   interests?:InterestType[],
@@ -50,7 +48,7 @@ export interface IUserUpdate {
   
 }
 export interface IUser {
-  email?:string,
+
   firstName?:string,
   lastName?:string,
   username?:string,
