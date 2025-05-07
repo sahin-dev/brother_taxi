@@ -895,58 +895,7 @@ if (user?.genderVisibility === false) {
 
 
 
-const getMatchingUsres = async (userId:string, page:number = 1, limit:number = 10) => {
-  const targetUser = await prisma.user.findUnique({where:{id:userId}})
-  if (!targetUser){
-    throw new ApiError(httpStatus.NOT_FOUND, "User not found")
-  } 
-  const offset = (page - 1) * limit;
-  const ageGroup = targetUser.interestAgeGroup
-  let ageMin, ageMax
-  if (ageGroup == AgeGroup.EIGHTEEN_TO_TWENTYFIVE){
-    ageMin = 18
-    ageMax = 25
-  }else if (ageGroup == AgeGroup.TWENTYFIVE_TO_THIRTYFIVE){
-    ageMin = 25
-    ageMax = 35
-  }else if (ageGroup == AgeGroup.FOURTYFIVE_TO_SIXTY){
-    ageMin = 45
-    ageMax = 60
-  }else if (ageGroup == AgeGroup.SIXY_TO_MORE){   
-    ageMin = 60
-    ageMax = 100 
-  }
 
-
-
-  const users = await prisma.user.findMany({
-    where:{
-      AND:[
-        {id:{not:userId}},
-        {residence_country:{equals:targetUser.residence_country}},
-        {age:{gte:ageMin, lte:ageMax}},
-        {interests:{hasSome:targetUser.interests}}
-      ]
-
-},
-skip:offset,
-take:limit,}
-)
-const filteredUsers = users.map((user) => {
-  if (user.gender?.label !== targetUser.gender?.label) {
-    if (user.genderVisibility === false) {
-      user.gender = null; 
-      return user; //
-  }
-}
-  return null
-})
-  
-const totalPages = Math.ceil(filteredUsers.length / limit)
-return {data:filteredUsers, pagination:{page, limit, totalPages}}
-
-
-}
 export const userService = {
   createUserIntoDb,
   getUsersFromDb,
@@ -962,7 +911,6 @@ export const userService = {
   setUserPhone,
   deleteAccount,
   verifySetPhone,
-  getMatchingUsres,
   getMyProfile,
   setOrChangeUsername
 };

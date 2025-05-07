@@ -21,14 +21,26 @@ const toggleLike = catchAsync(async (req, res) => {
   });
 const getAllMyLikeIds = catchAsync(async (req, res) => {
     const user=req.user;
-    const result = await LikeService.getAllMyLikeIds(user as JwtPayload);
+    const result = await LikeService.getAllMyLikedIds(user.id);
     sendResponse(res, {
       success: true,
       statusCode: 200,
-      message: "successfully",
+      message: "Retrive successfully",
       data: result,
     });
   });
+
+const getWhoLikeMe = catchAsync(async (req, res) => {
+    const user=req.user;    
+    const result = await LikeService.getWhoLikeMe(user.id);
+    sendResponse(res, { 
+      success: true,
+      statusCode: 200,
+      message: "Retrive successfully",
+      data: result,
+    });
+  });
+
 const getAllMyLikeUsers = catchAsync(async (req, res) => {
     const user=req.user;
     const filters = pick(req.query,likeFilterableFields );
@@ -61,5 +73,6 @@ export const likeController = {
     toggleLike,
     getAllMyLikeIds,
     getAllMyLikeUsers,
-    getPeerLikes
+    getPeerLikes,
+    getWhoLikeMe
   };

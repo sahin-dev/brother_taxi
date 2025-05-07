@@ -24,6 +24,11 @@ model User {
   travelPartner     TravelPartner?
   deleted           Boolean @default(false)
 
+  boosted          Boolean @default(false)
+  boostedTill       DateTime?
+
+  superMessagesSent   Int @default(3)
+
   gender            GenderDescription?
   genderVisibility  Boolean?        @default(false)
   tripType          TripType?
@@ -34,7 +39,7 @@ model User {
   otp            String?
   otpExpiresIn   DateTime?
   status            UserStatus?     @default(INACTIVE)
-
+  
 
   password       String?
   fcmToken       String?
@@ -42,7 +47,7 @@ model User {
   isPayment      Boolean  @default(false)
   customerId     String?
   priceId        String?
-  planName       String?
+  planName       String?  @default("FREE")
   subscriptionId String?
   name           String?
   lat            String?
@@ -75,6 +80,7 @@ model User {
   trips             Trip[]
   // otp                Otp
   @@map("users")
+  Subscription Subscription[]
 }
 
 type GenderDescription {
@@ -206,6 +212,22 @@ model SuperLike {
   updatedAt  DateTime @updatedAt
 
   @@map("superLikes")
+}
+
+model Subscription {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  planName   String    @default("FREE")
+  userId      String   @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id])
+  subscriptionId String
+  status      String 
+  startDate   DateTime
+  endDate     DateTime
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("subscriptions")
 }
 
 model Chat {

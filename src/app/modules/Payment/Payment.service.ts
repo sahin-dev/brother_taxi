@@ -213,7 +213,8 @@ const buySubscription = async (payload: IBuySubscription, user: JwtPayload) => {
     const subscriptionParams: any = {
       customer: customerId,
       items: [{ price: priceId }],
-      expand: ['latest_invoice.payment_intent'],
+      payment_behavior: 'default_incomplete',
+      expand: ['latest_invoice'],
     };
 
     if (couponId) {
@@ -257,12 +258,17 @@ const buySubscription = async (payload: IBuySubscription, user: JwtPayload) => {
             100 || null,
         discountPercent:
           subscription?.latest_invoice?.discount?.coupon?.percent_off || null,
-        hosted_invoice_url: subscription?.latest_invoice?.hosted_invoice_url,
-        invoice_pdf: subscription?.latest_invoice?.invoice_pdf,
+        hosted_invoice_url: subscription?.latest_invoice?.hosted_invoice_url || null,
+        invoice_pdf: subscription?.latest_invoice?.invoice_pdf || null,
       };
 
       const paymentInfo = await tx.paymentInfo.create({
-        data: returnData,
+        data: {amount:returnData.total,userEmail:existingUser.email,
+          hosted_invoice_url:returnData.hosted_invoice_url,
+          invoice_pdf:returnData.invoice_pdf,
+          subscriptionId:subscription.id,
+          tranId:subscription?.latest_invoice?.number,
+          status:subscription?.latest_invoice?.status},
       });
 
       return returnData;

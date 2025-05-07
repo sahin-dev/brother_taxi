@@ -23,7 +23,6 @@ router.get("/", userController.getUsers);
 router.get("/get-random-user", userController.getRandomUser);
 router.get("/get-user-home",auth(), userController.getUserForHomePage);
 router.post('/check-email',validateRequest(UserValidation.checkEmailSchema), userController.checkEmail)
-router.get("/match-user",auth(), userController.getMatchingUsers);
 router.post('/check-username', userController.checkUsername)
 router.post('/set-username',auth(), validateRequest(UserValidation.setUsernameSchema), userController.setUsername)
 router.get("/:id", userController.getSingleUserById);

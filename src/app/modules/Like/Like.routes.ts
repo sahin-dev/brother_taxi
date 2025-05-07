@@ -17,6 +17,13 @@ router.get(
   auth(UserRole.ADMIN, UserRole.USER),
   likeController.getAllMyLikeIds
 );
+
+router.get(
+  "/like-me",
+  auth(UserRole.ADMIN, UserRole.USER),
+  likeController.getWhoLikeMe
+);
+
 router.get(
   "/my-likes-user",
   auth(UserRole.ADMIN, UserRole.USER),

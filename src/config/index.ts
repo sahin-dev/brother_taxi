@@ -7,8 +7,10 @@ dotenv.config({ path: path.join(process.cwd(), '.env') });
 const config =  {
     env: process.env.NODE_ENV,
     stripe_key:process.env.STRIPE_SECRET_KEY,
+    forontend_url:process.env.FRONTEND_URL,
     port: process.env.PORT,
     bcrypt_salt_rounds:process.env.BCRYPT_SALT_ROUNDS,
+    webhook_secret:process.env.STRIPE_WEBHOOK_KEY,
     jwt: {
         jwt_secret: process.env.JWT_SECRET,
         expires_in: process.env.EXPIRES_IN,

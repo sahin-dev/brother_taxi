@@ -103,19 +103,6 @@ const getUsers = catchAsync(async (req: Request, res: Response) => {
 // });
 
 
-const getMatchingUsers = catchAsync(async (req:Request, res:Response)=>{
-    const userId = req.user.id
-    const {page , limit} = req.query as {page:string, limit:string}
-    
-    const result = await userService.getMatchingUsres(userId, parseInt(page), parseInt(limit))
-    sendResponse(res, {
-      statusCode: httpStatus.OK,
-      success: true,
-      message: "Matching users retrieved successfully!",
-      data: result,
-    });
-})
-
 
 //update gender visibility
 
@@ -242,6 +229,5 @@ export const userController = {
   updateGenderVisibility,
   deleteUser,
   verifySetUserPhone,
-  getMatchingUsers,
   getMyProfile
 };

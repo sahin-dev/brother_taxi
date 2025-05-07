@@ -84,15 +84,16 @@ const toggleLike = async (id: string, user: any) => {
   return prismaTransaction;
 };
 
-const getAllMyLikeIds = async (user: JwtPayload) => {
-  const findUser = await prisma.user.findUnique({ where: { id: user.id } });
+const getAllMyLikedIds = async (id: string) => {
+
+  const findUser = await prisma.user.findUnique({ where: { id: id } });
 
   if (!findUser) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
   const result = await prisma.like.findMany({
     where: {
-      senderId: user.id,
+      senderId: id,
     },
     select: {
       receiverId: true,
@@ -101,6 +102,27 @@ const getAllMyLikeIds = async (user: JwtPayload) => {
   return result.map((item) => item.receiverId);
 };
 
+const getWhoLikeMe = async (id: string) => {  
+  
+  const me = await prisma.user.findUnique({ where: { id: id } });
+
+  if (!me) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+  const result = await prisma.like.findMany({
+    where: {
+      senderId: id,
+    },
+    select: {
+      receiverId: true,
+    },
+  });
+  if (me.planName === "FREE") {
+    const limitedResult = result.slice(0, 3); // Limit to 5 results
+    return limitedResult.map((item) => item.receiverId);
+  }
+  return result.map((item) => item.receiverId);
+}
 
 
 const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
@@ -400,7 +422,8 @@ const getPeerLikes = async (
 
 export const LikeService = {
   toggleLike,
-  getAllMyLikeIds,
+  getAllMyLikedIds,
+  getWhoLikeMe,
   getAllMyLikeUsers,
   getPeerLikes
 };
