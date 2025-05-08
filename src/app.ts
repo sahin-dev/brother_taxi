@@ -13,6 +13,7 @@ import swaggerUi from 'swagger-ui-express'
 import swaggerSpec from "./swagger";
 import path from 'path'
 import stripeWebhook from "./helpers/stripeWebhook";
+import { stripeService } from "./app/modules/Stripe/stripe.service";
 
 
 const app: Application = express();
@@ -43,7 +44,7 @@ export const corsOptions = {
 };
 
 
-app.post('/webhook', express.raw({type:"application/json"}), stripeWebhook)
+app.post('/webhook', express.raw({type:"application/json"}), stripeService.stripeWebhook)
 // Middleware setup
 app.use(cors(corsOptions));
 app.use(cookieParser());

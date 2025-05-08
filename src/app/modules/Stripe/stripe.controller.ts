@@ -37,7 +37,7 @@ const createStripeAccount = async (req: Request, res: Response) => {
     const user = req.user;  
     
 
-    const result = await stripeService.createStripeAccount(user.id, user.email!);
+    const result = await stripeService.createNewAccountIntoStripe(user.id);
     sendResponse(res, {
         success: true,
         statusCode: 200,
@@ -54,7 +54,7 @@ const stripeWebhook = async (req: Request, res: Response) => {
     if (!sig) {
       console.error('Missing Stripe signature header');
     }
-    const result = await stripeService.stripeWebhook(body, sig);
+    // const result = await stripeService.stripeWebhook(body, sig);
 
     res.status(200).send("webhook received")
 }

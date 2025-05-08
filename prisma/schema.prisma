@@ -39,7 +39,7 @@ model User {
   otp            String?
   otpExpiresIn   DateTime?
   status            UserStatus?     @default(INACTIVE)
-  
+  accountLink   String?
 
   password       String?
   fcmToken       String?
