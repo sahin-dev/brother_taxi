@@ -17,6 +17,24 @@ const saveChat = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const sendSuperMessage = catchAsync(async (req:Request, res:Response)=>{
+
+  const user = req.user
+  if (!user){
+    throw new ApiError (httpStatus.NOT_FOUND, "User not found")
+  }
+
+  const result = await chatServices.sendSuperMessager(user, req.body)
+
+  sendResponse(res, {
+    statusCode:httpStatus.OK,
+    success:true,
+    message:"Super message sent",
+    data:result
+  })
+
+})
+
 const getChats = catchAsync(async (req: Request, res: Response) => {
   const user = req.user;
   const result = await chatServices.getChatFromDb(user, req.body);
@@ -92,7 +110,8 @@ export const chatController = {
   getChatById,
   updateChat,
   deleteChat,
-  imageUpload
+  imageUpload,
+  sendSuperMessage
 };
 
 

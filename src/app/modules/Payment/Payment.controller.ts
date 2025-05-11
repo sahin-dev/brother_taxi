@@ -4,6 +4,7 @@ import httpStatus from 'http-status';
 import catchAsync from '../../../shared/catchAsync';
 import sendResponse from '../../../shared/ApiResponse';
 import { IUser } from '../User/user.interface';
+import { User } from '@prisma/client';
 
 
 // Create Price
@@ -193,6 +194,21 @@ const getAllStripeProducts = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const createIntent = catchAsync(async (req: Request, res: Response) => {
+  const { planName, } = req.params;  
+  const {methodId} = req.body
+  const user = req.user as User; // Cast req.user to IUser type
+
+  const result = await PaymentService.createIntent(planName, user,methodId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Payment intent created successfully!',
+    data: result,
+  });
+}
+);
+
 export const PaymentController = {
   createPrice,
   getAllPrices,
@@ -211,5 +227,6 @@ export const PaymentController = {
   getAllPayments,
   getPackageByPriceId,
   getAllStripePrices,
-  getAllStripeProducts
+  getAllStripeProducts,
+  createIntent
 };

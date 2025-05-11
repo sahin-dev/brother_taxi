@@ -43,6 +43,12 @@ const auth = (...roles: string[]) => {
       if (user.status === "BLOCKED") {
         throw new ApiError(httpStatus.FORBIDDEN, "Your account is blocked!");
       }
+      if (user.deleted){
+        throw new ApiError(httpStatus.BAD_REQUEST, "account is deleted")
+      }
+       if (!user.isCompleteProfile){
+        throw new ApiError(httpStatus.BAD_REQUEST, "Your profile is not completed")
+       }
 
       req.user = user;
       console.log(user.role)

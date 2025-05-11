@@ -6,6 +6,7 @@ import { UserRole } from '@prisma/client';
 import auth from '../../middlewares/auth.middleware';
 import { chatController } from './chat.controller';
 import { fileUploader } from '../../../helpers/fileUploader';
+import checkSubscription from '../../middlewares/subscription.middleware';
 
 const router = express.Router();
 
@@ -17,6 +18,7 @@ router.post(
   chatController.saveChat
 );
 
+router.post ('/super-message', validateRequest(chatValidation.chatSchema), auth(),checkSubscription, chatController.sendSuperMessage)
 router.get(
   '/',
   auth(),

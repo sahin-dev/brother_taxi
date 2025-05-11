@@ -11,11 +11,13 @@ import { IUser } from '../User/user.interface';
 import { User } from '@prisma/client';
 import config from '../../../config';
 import { get } from 'http';
+import products from '../../../helpers/products';
 
 
 
 const stripe = require('stripe')(
-config.stripe_key
+config.stripe_key,
+{apiVersion: '2025-03-31.basil',}
 );
 
 export interface IBuySubscription {
@@ -163,6 +165,92 @@ const deletePrice = async (id: string) => {
 
   return { message: `Price with ID ${id} archived and deleted successfully` };
 };
+
+const createIntent = async (planName:string,user:User,methodId:string) => {
+  
+  
+  let price = products.find((item) => item.name === planName.toLowerCase());
+
+  let customerId = user?.customerId;
+  if (!customerId){
+    const customer = await stripe.customers.create({
+      email: user?.email,
+      name: user?.name,
+      payment_method: methodId, // ✅ attach payment method
+      invoice_settings: {
+        default_payment_method: methodId, // ✅ set as default
+      },
+    });
+    console.log(customer)
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { customerId: customer.id },
+    });
+    customerId = customer.id;
+  }
+if (methodId){
+  
+  await stripe.paymentMethods.attach(methodId, {
+    customer: customerId,
+  });
+  await stripe.customers.update(customerId, {
+    invoice_settings: {
+      default_payment_method: methodId,
+    },
+  });
+}
+
+  const ephemeralKey = await stripe.ephemeralKeys.create(
+    { customer: customerId },
+    { apiVersion: '2025-03-31.basil', },
+  );
+  console.log(price)
+  let priceDetails = await stripe.prices.retrieve(price?.id);
+
+  if (!price) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Price not found');
+
+  }
+
+  if (planName.toLocaleLowerCase() === 'premium'){
+    const subscription = await stripe.subscriptions.create({
+      customer:customerId,
+      items:[{price:priceDetails.id}],
+      metadata: {
+        userId: user.id,
+        planType: planName,
+  
+  },
+      // expand:['latest_invoice.payment_intent']
+      
+    })
+    console.log(subscription)
+    return {message:"Subscription created successfully"}
+
+  }else{
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: priceDetails.unit_amount, // Amount in cents
+      currency: priceDetails.currency,
+      customer: customerId,
+      automatic_payment_methods: {
+        enabled: true,
+      },
+      metadata: {
+        priceId: price.id,
+        productName: planName,
+        userId:user.id
+      },
+      receipt_email: user?.email,
+    });
+    let secret = paymentIntent?.client_secret
+    return {client_secret:secret,ephemeralKey:ephemeralKey.secret,customerId:customerId,priceId:price.id,productName:planName, publishable_Key:config.stripe_key};
+  }
+  // Step 1: Create a PaymentIntent in Stripe
+
+  
+
+  
+}
 
 const buySubscription = async (payload: IBuySubscription, user: JwtPayload) => {
   try {
@@ -701,5 +789,6 @@ export const PaymentService = {
   getAllPayments,
   getPackageByPriceId,
   getAllPricesFromStripe,
-  getAllStripeProducts
+  getAllStripeProducts,
+  createIntent
 };

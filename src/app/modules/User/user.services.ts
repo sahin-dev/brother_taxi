@@ -896,17 +896,22 @@ if (user?.genderVisibility === false) {
 
 
 
-const boostProfile = async (id:string, boostTime: number) => {
+const boostProfile = async (id:string, boostTime: number = 30) => {
   const user = await prisma.user.findUnique({where:{id}})
 
   if (!user){
     throw new ApiError(httpStatus.NOT_FOUND, "User not found")
   }
-  // const boostLeft = user.boostedTill - Date.now()
 
-  const boostEndTime = new Date(Date.now() + boostTime * 60 * 1000)
+  if ( !user.boosted || !user.boostedTill || user.boostedTill < new Date()){
+    throw new ApiError(httpStatus.BAD_REQUEST, "You have no boost.")
 
-  await prisma.user.update({where:{id}, data:{boosted:true, boostedTill:boostEndTime}})
+  }
+ 
+
+  // const boostEndTime = new Date(Date.now() + boostTime * 60 * 1000)
+
+  
 
   return {message:"Profile boosted successfully"}
 

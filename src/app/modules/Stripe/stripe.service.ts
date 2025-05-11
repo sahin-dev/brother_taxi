@@ -5,6 +5,7 @@ import { Request, Response } from "express";
 import prisma from "../../../shared/prisma";
 import httpstatus from "http-status";
 import ApiError from "../../../errors/ApiError";
+import admin from "../Notification/firebaseAdmin";
 
 
 const stripe = require('stripe')(config.stripe_key as string,{apiVersion: '2024-12-18.acacia'});
@@ -148,42 +149,95 @@ const stripeWebhook = async (req:Request, res:Response) => {
       sig,
       config.webhook_secret as string // Your webhook secret
     );
+    console.log(event.type)
+ switch (event.type) {
+    case 'payment_intent.succeeded': {
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
+      const metadata = paymentIntent.metadata;
 
-  if (event.type === 'payment_intent.succeeded') {
-    const paymentIntent = event.data.object;
-    console.log('PaymentIntent was successful!', paymentIntent);
-    // update database, mark order as paid, etc.
+      const userId = metadata.userId;
+      const productName = metadata.productName; // boost, super_message, etc.
+
+      if (!userId || !productName) break;
+      const user = await prisma.user.findUnique({where:{id:userId}})
+
+      if (productName === 'boost') {
+
+        let boostLeft = new Date(user?.boostedTill || Date.now()).getTime() - Date.now()
+        if (boostLeft <= 0){
+          boostLeft = 0
+        }
+        
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            boosted: true,
+            boostedTill: new Date(boostLeft + 30 * 60 * 1000), // 30 min boost
+          },
+        });
+        
+        if (user?.fcmToken){
+          
+        const message = {
+          notification: {
+          title:"Payment Successfull",
+            body:`Your paayment successfully paid`,
+          },
+          token: user?.fcmToken,
+        };
+            admin.messaging().send(message)
+            }
+      } else if (productName === 'super_message') {
+        let super_message = 0
+        if ((user?.superMessages ?? 0) >= 0) {
+          super_message += user?.superMessages ?? 0;
+        }
+
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            superMessages: super_message, // or increment as needed
+          },
+        });
+      }
+      break;
+    }
+
+    case 'invoice.payment_succeeded': {
+      const invoice = event.data.object as Stripe.Invoice;
+     
+      const subscriptionId = invoice.parent?.subscription_details?.subscription;
+      
+     
+
+      // Retrieve full subscription with metadata
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+
+      const userId = subscription.metadata?.userId;
+      const planType = subscription.metadata?.planType;
+
+      if (userId && planType === 'premium') {
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            planName: 'premium',
+            subscriptionId: subscriptionId as string,
+            isPayment: true,
+          },
+        });
+      }
+
+      break;
+    }
+
+    default:
+      console.log(`Unhandled event type: ${event.type}`);
   }
-  else if (event.type === 'payment_method.attached') {
-    const paymentMethod = event.data.object;
-
-    // Handle the event
-  } else if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
-    console.log('Checkout session completed!', session);
-    // Handle the event
-  } else if (event.type === 'account.updated') {
-    const account = event.data.object;
-    // Handle the event
-  } else if (event.type === 'account.application.authorized') {
-    const account = event.data.object;
-    // Handle the event
-  } else if (event.type === 'account.application.deauthorized') {
-    const account = event.data.object;
-    // Handle the event
-  } else if (event.type === 'customer.subscription.updated') {
-    const subscription = event.data.object;
-    // Handle the event
-  } else if (event.type === 'customer.subscription.deleted') {
-    const subscription = event.data.object;
-    // Handle the event
-  } else {
-    console.log(`Unhandled event type ${event.type}`);
-}
     
     res.status(200).json({ received: true });
 
 }
+
 export const stripeService = {
     createSession,
     createIntent,

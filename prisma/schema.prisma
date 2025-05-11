@@ -27,7 +27,7 @@ model User {
   boosted          Boolean @default(false)
   boostedTill       DateTime?
 
-  superMessagesSent   Int @default(3)
+  superMessages   Int @default(3)
 
   gender            GenderDescription?
   genderVisibility  Boolean?        @default(false)

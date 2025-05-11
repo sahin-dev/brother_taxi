@@ -2,6 +2,7 @@
 import ApiError from '../../../errors/ApiError';
 import { fileUploader } from '../../../helpers/fileUploader';
 import prisma from '../../../shared/prisma';
+import httpstatus from 'http-status'
 
 const saveChatIntoDb = async (user: any, payload: any) => {
   
@@ -16,6 +17,21 @@ const saveChatIntoDb = async (user: any, payload: any) => {
 
   return chat;
 };
+
+const sendSuperMessager = async (user:any, payload: any)=>{
+  const receiver = await prisma.user.findUnique({where:{id:payload.receiverId}})
+  if (!receiver){
+    throw new ApiError(httpstatus.NOT_FOUND, "Reciever not found")
+  }
+
+  const room = await prisma.room.create({data:{senderId:user.id, receiverId:payload.receiverId}})
+
+  const chat = await prisma.chat.create({
+    data:{senderId:user.id,receiverId:payload.receiverId, roomId:room.id,message:payload.message}
+  })
+
+  return {message:"super message sent."}
+}
 
 const getChatFromDb = async (user: any, payload: any) => {
   const chats = await prisma.chat.findMany({
@@ -96,4 +112,5 @@ export const chatServices = {
   updateChatInDb,
   deleteChatFromDb,
   imageUpload,
+  sendSuperMessager
 };
