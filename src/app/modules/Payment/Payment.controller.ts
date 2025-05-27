@@ -209,6 +209,10 @@ const createIntent = catchAsync(async (req: Request, res: Response) => {
 }
 );
 
+const boostProfile = catchAsync(async (req:Request, res:Response)=>{
+  
+})
+
 export const PaymentController = {
   createPrice,
   getAllPrices,
