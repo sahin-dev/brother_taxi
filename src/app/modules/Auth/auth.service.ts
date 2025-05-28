@@ -159,27 +159,9 @@ const getMyProfile = async (userId: string) => {
   const userProfile = await prisma.user.findUnique({
     where: {
       id: userId,
-    },
-    select: {
-      id: true,
-      email: true,
-      phone: true,
-      gender: true,
-      dob: true,
-      isPayment: true,
-      planName: true,
-      fcmToken: true,
-      priceId: true,
-      subscriptionId: true,
-      interests: true,
-      distance: true,
-      photos: true,
-      about: true,
-      isCompleteProfile: true,
-      createdAt: true,
-      updatedAt: true,
-    },
+    }
   });
+  
   
 
 
