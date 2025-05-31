@@ -1,4 +1,4 @@
-import { AgeGroup, GenderSubCategory, InterestType, TravelPartner, TripDuration, TripType, UserRole } from "@prisma/client";
+import { AgeGroup, GenderLabel, GenderSubCategory, InterestType, TravelPartner, TripDuration, TripType, UserRole } from "@prisma/client";
 import { boolean } from "zod";
 
 
@@ -38,7 +38,8 @@ export interface IUserUpdate {
   budgetMin?:number,
   budgetMax?:number,
   travelPartner?:TravelPartner,
-  gender?:{label:string, sub_categories?:GenderSubCategory[]},
+  gender:GenderLabel,
+  gender_sub_categories?:GenderSubCategory[],  
   genderVisibility?:boolean,
   tripType?:TripType,
   tripDuration?:TripDuration,
@@ -61,7 +62,8 @@ export interface IUser {
   budgetMin:number,
   budgetMax:number,
   travelPartne:TravelPartner,
-  gender:{label:string, sub_categories?:GenderSubCategory[]},
+  gender:GenderLabel,
+  gender_sub_categories?:GenderSubCategory[],
   tripType:TripType,
   tripDuration:TripDuration,
   tripContinent:string,
