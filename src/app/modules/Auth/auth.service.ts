@@ -155,6 +155,8 @@ const appleLogin = async (appleProfile:any)=>{
 
 // // get user profile
 const getMyProfile = async (userId: string) => {
+
+
   
   const userProfile = await prisma.user.findUnique({
     where: {
@@ -176,12 +178,19 @@ const getMyProfile = async (userId: string) => {
       budgetMin:true,
       budgetMax:true,
       dob:true,
-      distance:true
+      distance:true,
+      genderVisibility:true,
+      gender:true,
+      gender_sub_categories:true,
+      
     }
   });
   
+  if (userProfile && userProfile?.genderVisibility === false){
+    userProfile.gender = null;
+    userProfile.gender_sub_categories = [];
+  }
   
-
 
   return userProfile;
 };

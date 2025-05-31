@@ -31,7 +31,7 @@ model User {
 
   gender            GenderLabel?
   gender_sub_categories GenderSubCategory[]
-  genderVisibility  Boolean?        @default(false)
+  genderVisibility  Boolean?        @default(true)
   tripType          TripType?
   tripDuration      TripDuration?
   tripContinent  String?

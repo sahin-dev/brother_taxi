@@ -159,7 +159,8 @@ const createUserIntoDb = async (userId:string,payload:IUser) => {
       phone: true,
       email:true,
       username:true,
-      
+      gender: true,
+      gender_sub_categories:true,   
       // otp: true,
       createdAt: true,
       updatedAt: true,
@@ -442,6 +443,7 @@ const updateUser = async (payload: IUserUpdate, userId: string) => {
       lastName: true,
       username: true,
       gender: true,
+      gender_sub_categories:true,
       about: true,
       role: true,
       createdAt: true,
