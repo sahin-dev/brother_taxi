@@ -29,7 +29,8 @@ model User {
 
   superMessages   Int @default(3)
 
-  gender            GenderDescription?
+  gender            GenderLabel?
+  gender_sub_categories GenderSubCategory[]
   genderVisibility  Boolean?        @default(false)
   tripType          TripType?
   tripDuration      TripDuration?
@@ -329,6 +330,11 @@ enum TravelPartner {
   WOMENS
   NON_BINARIES
   EVERYONE
+}
+
+enum GenderLabel {
+  MALE
+  FEMALE
 }
 
 enum GenderSubCategory {

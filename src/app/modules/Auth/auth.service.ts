@@ -159,6 +159,24 @@ const getMyProfile = async (userId: string) => {
   const userProfile = await prisma.user.findUnique({
     where: {
       id: userId,
+    },
+    select:{
+      id:true,
+      about:true,
+      age:true,
+      appleId:true,
+      boosted:true,
+      residence_country:true,
+      interestAgeGroup:true,
+      tripContinent:true,
+      tripCountry:true,
+      travelPartner:true,
+      tripDuration:true,
+      tripType:true,
+      budgetMin:true,
+      budgetMax:true,
+      dob:true,
+      distance:true
     }
   });
   
