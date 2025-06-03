@@ -9,11 +9,9 @@ import passport from 'passport'
 import router from "./app/routes";
 import ErrorHandler from "./app/middlewares/error.middleware";
 import { User } from "@prisma/client";
-import swaggerUi from 'swagger-ui-express'
-import swaggerSpec from "./swagger";
 import path from 'path'
-import stripeWebhook from "./helpers/stripeWebhook";
-import { stripeService } from "./app/modules/Stripe/stripe.service";
+
+
 
 
 const app: Application = express();
@@ -44,7 +42,7 @@ export const corsOptions = {
 };
 
 
-app.post('/webhook', express.raw({type:"application/json"}), stripeService.stripeWebhook)
+
 // Middleware setup
 app.use(cors(corsOptions));
 app.use(cookieParser());
@@ -58,9 +56,7 @@ app.use(express.static("public"));
 
 // Router setup
 app.use("/api/v1", router);
-app.use('/api-docs', express.static(path.join(__dirname, 'node_modules', 'swagger-ui-dist')));
-app.use('/api-docs',swaggerUi.serve)
-app.get('/api-docs', swaggerUi.setup(swaggerSpec))
+
 // Error handling middleware
 app.use(ErrorHandler);
 
