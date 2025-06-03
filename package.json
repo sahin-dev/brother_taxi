@@ -1,7 +1,7 @@
 {
   "name": "mobile_app_roady_api",
   "version": "1.0.0",
-  "description": "Backend apifor  modile app named \"Roady\" developed using NodeJs and ExpressJs",
+  "description": "Backend api developed using NodeJs and ExpressJs",
   "main": "server.ts",
   "scripts": {
     "start": "nodemon src/server.ts",
@@ -14,15 +14,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sahin-dev/mobile_app_roady_api.git"
+    "url": ""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/sahin-dev/mobile_app_roady_api/issues"
+    "url": ""
   },
-  "homepage": "https://github.com/sahin-dev/mobile_app_roady_api#readme",
+  "homepage": "",
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
     "@types/cookie-parser": "^1.4.8",
