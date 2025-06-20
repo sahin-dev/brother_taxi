@@ -6,3 +6,44 @@ datasource db {
   provider = "mongodb"
   url      = env("DATABASE_URL")
 }
+
+
+model User {
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  phone          String          @unique      
+  name           String?
+  about           String?
+  otp             String?
+  otpExpiresIn    DateTime?
+  email          String?
+  avatar         String          @default("https://app.boom360trader.com/uploads/user.png")
+  fcmToken       String?
+  subcription    Boolean?        @default(false)
+  status         UserStatus
+  accessToken    String?
+  customerId     String?
+  priceId        String?
+  subscriptionId String?
+  profileCompleted  Boolean @default(false)
+  roleId         String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+
+  @@map("users")
+}
+
+model Ride {
+  id        String      @id @db.ObjectId  @default(auto()) @map("_id")
+}
+
+enum Cords {
+  lat 
+  long
+}
+
+enum UserStatus {
+
+  Rider
+  Driver
+}
