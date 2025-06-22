@@ -26,6 +26,10 @@ model User {
   subscriptionId String?
   profileCompleted  Boolean @default(false)
   roleId         String?
+  vehicle       Vehicle[]
+  providedReviews     Review[]    @relation("reviewerRelation")
+  receivedReviews     Review[]    @relation("recieverRelation")
+
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
@@ -33,8 +37,44 @@ model User {
   @@map("users")
 }
 
+model Vehicle {
+
+  id        String   @id @db.ObjectId   @default(auto())  @map("_id")
+  driver_id String    @db.ObjectId
+  driver     User    @relation(fields: [driver_id], references: [id])
+
+  make      String
+  license   String
+  refCode   String
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+}
+
 model Ride {
   id        String      @id @db.ObjectId  @default(auto()) @map("_id")
+  pickup_point Cords
+  drop_point   Cords
+  paymentStatus PaymentStatus @default(Pending)
+
+}
+
+model Review {
+  id        String  @id  @default(auto()) @db.ObjectId @map("_id")
+  rating Float
+  text String
+
+  reviewer_id     String  @db.ObjectId
+  reciever_id     String  @db.ObjectId
+
+  reviewer      User    @relation(name: "reviewerRelation",fields: [reviewer_id], references: [id])
+  reciever      User    @relation(name: "recieverRelation",fields: [reciever_id], references: [id])
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@map("reviews")
 }
 
 enum Cords {
@@ -46,4 +86,10 @@ enum UserStatus {
 
   Rider
   Driver
+}
+
+enum PaymentStatus {
+  Pending
+  Completed
+  Canceled
 }
