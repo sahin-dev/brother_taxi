@@ -28,7 +28,7 @@ model User {
   roleId         String?
   vehicle       Vehicle[]
   providedReviews     Review[]    @relation("reviewerRelation")
-  receivedReviews     Review[]    @relation("recieverRelation")
+  receivedReviews     Review[]    @relation("receiverRelation")
 
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
@@ -49,7 +49,7 @@ model Vehicle {
 
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
-
+  @@map("vehicles")
 }
 
 model Ride {
@@ -66,10 +66,10 @@ model Review {
   text String
 
   reviewer_id     String  @db.ObjectId
-  reciever_id     String  @db.ObjectId
+  receiver_id     String  @db.ObjectId
 
   reviewer      User    @relation(name: "reviewerRelation",fields: [reviewer_id], references: [id])
-  reciever      User    @relation(name: "recieverRelation",fields: [reciever_id], references: [id])
+  receiver      User    @relation(name: "receiverRelation",fields: [receiver_id], references: [id])
 
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
