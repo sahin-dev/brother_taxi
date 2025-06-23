@@ -34,12 +34,30 @@ model User {
   userRide          Ride[]  @relation("riderRelation")
   driverRide        Ride[]  @relation("driverRelation")
 
+  vehicle       Vehicle[]
+  providedReviews     Review[]    @relation("reviewerRelation")
+  receivedReviews     Review[]    @relation("receiverRelation")
 
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
 
   @@map("users")
+}
+
+model Vehicle {
+
+  id        String   @id @db.ObjectId   @default(auto())  @map("_id")
+  driver_id String    @db.ObjectId
+  driver     User    @relation(fields: [driver_id], references: [id])
+
+  make      String
+  license   String
+  refCode   String
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  @@map("vehicles")
 }
 
 model Ride {
@@ -54,6 +72,27 @@ model Ride {
   rider     User    @relation(name: "riderRelation",fields: [rider_id], references: [id])
   driver    User    @relation(name: "driverRelation",fields: [driver_id], references: [id])
 
+  pickup_point Cords
+  drop_point   Cords
+  paymentStatus PaymentStatus @default(Pending)
+
+}
+
+model Review {
+  id        String  @id  @default(auto()) @db.ObjectId @map("_id")
+  rating Float
+  text String
+
+  reviewer_id     String  @db.ObjectId
+  receiver_id     String  @db.ObjectId
+
+  reviewer      User    @relation(name: "reviewerRelation",fields: [reviewer_id], references: [id])
+  receiver      User    @relation(name: "receiverRelation",fields: [receiver_id], references: [id])
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@map("reviews")
 }
 
 enum Cords {
@@ -69,7 +108,10 @@ enum UserRole {
 
 enum RideStatus {
   Pending
-  Ongoing
   Completed
   Cancel
+  }
+enum PaymentStatus {
+  Pending
+  Canceled
 }
