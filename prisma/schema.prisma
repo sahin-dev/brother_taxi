@@ -15,17 +15,25 @@ model User {
   about           String?
   otp             String?
   otpExpiresIn    DateTime?
+  googleId        String?
+  appleId          String?
+
   email          String?
   avatar         String          @default("https://app.boom360trader.com/uploads/user.png")
   fcmToken       String?
   subcription    Boolean?        @default(false)
-  status         UserStatus
+  role         UserRole
   accessToken    String?
   customerId     String?
   priceId        String?
   subscriptionId String?
   profileCompleted  Boolean @default(false)
   roleId         String?
+
+
+  userRide          Ride[]  @relation("riderRelation")
+  driverRide        Ride[]  @relation("driverRelation")
+
   vehicle       Vehicle[]
   providedReviews     Review[]    @relation("reviewerRelation")
   receivedReviews     Review[]    @relation("receiverRelation")
@@ -54,6 +62,16 @@ model Vehicle {
 
 model Ride {
   id        String      @id @db.ObjectId  @default(auto()) @map("_id")
+  rider_id   String      @db.ObjectId
+  driver_id  String     @db.ObjectId
+  status      RideStatus    @default(Pending)
+  start       Cords
+  end         Cords
+
+
+  rider     User    @relation(name: "riderRelation",fields: [rider_id], references: [id])
+  driver    User    @relation(name: "driverRelation",fields: [driver_id], references: [id])
+
   pickup_point Cords
   drop_point   Cords
   paymentStatus PaymentStatus @default(Pending)
@@ -82,14 +100,18 @@ enum Cords {
   long
 }
 
-enum UserStatus {
+enum UserRole {
 
   Rider
   Driver
 }
 
-enum PaymentStatus {
+enum RideStatus {
   Pending
   Completed
+  Cancel
+  }
+enum PaymentStatus {
+  Pending
   Canceled
 }
