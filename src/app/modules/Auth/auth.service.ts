@@ -6,9 +6,10 @@ import httpStatus from "http-status";
 import { jwtHelpers } from "../../../helpers/jwt";
 import config from "../../../config";
 import { ObjectId } from "mongodb";
+import { UserRole } from "@prisma/client";
 
 
-export const loginUserIntoDB = async (payload: {countryCode:string, phone:string, otp?:string, fcmToken?:string}) => {
+export const loginUserIntoDB = async (payload: {countryCode:string, phone:string,role:UserRole ,otp?:string, fcmToken?:string}) => {
 
   let accessToken;
   let userInfo;
@@ -29,6 +30,7 @@ export const loginUserIntoDB = async (payload: {countryCode:string, phone:string
     const createUser = await prisma.user.create({
       data: {
         phone:payload.phone,
+        role:payload.role,
         otp,
         otpExpiresIn
       },
@@ -52,6 +54,7 @@ export const loginUserIntoDB = async (payload: {countryCode:string, phone:string
     // await sendMessage(messageBody, createUser.phone)
     return {message:messageBody}
   }
+
   if (!payload.otp){
     const otp = generateOtp()
     const otpExpiresIn = new Date(Date.now() + 10 *60*1000)
@@ -113,6 +116,7 @@ export const loginUserIntoDB = async (payload: {countryCode:string, phone:string
     userInfo,
   };
 };
+
 
 export const logoutUser = async (userId:string)=>{
   const user = await prisma.user.findUnique({where:{id:userId}})

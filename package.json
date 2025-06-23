@@ -1,5 +1,5 @@
 {
-  "name": "mobile_app_roady_api",
+  "name": "brother_texi",
   "version": "1.0.0",
   "description": "Backend api developed using NodeJs and ExpressJs",
   "main": "server.ts",
